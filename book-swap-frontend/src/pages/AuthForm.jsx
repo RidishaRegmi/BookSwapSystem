@@ -1,16 +1,42 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "../styles/AuthForm.css";
 
 export default function AuthForm() {
-  const [isLogin, setIsLogin] = useState(true);
+  const routerLocation = useLocation();
+  const [isLogin, setIsLogin] = useState(
+    routerLocation.search !== "?mode=register",
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [location, setLocation] = useState("");
+  const [locationLoading, setLocationLoading] = useState(false);
   const navigate = useNavigate();
+
+  const detectLocation = () => {
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+        );
+        const data = await res.json();
+        const city =
+          data.address.city || data.address.town || data.address.village || "";
+        setLocation(city);
+        setLocationLoading(false);
+      },
+      () => {
+        setError("Could not detect location. Please type manually.");
+        setLocationLoading(false);
+      },
+    );
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,7 +66,12 @@ export default function AuthForm() {
         const res = await fetch("http://localhost:8000/api/auth/register/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password, full_name: fullName }),
+          body: JSON.stringify({
+            email,
+            password,
+            full_name: fullName,
+            location,
+          }),
         });
 
         const data = await res.json();
@@ -151,6 +182,21 @@ export default function AuthForm() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
               />
+              <div className="location-row">
+                <input
+                  type="text"
+                  placeholder="Your City"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="location-btn"
+                  onClick={detectLocation}
+                >
+                  {locationLoading ? "..." : " Auto"}
+                </button>
+              </div>
               {password !== confirmPassword && confirmPassword && (
                 <p style={{ color: "red", fontSize: "13px" }}>
                   Passwords do not match!

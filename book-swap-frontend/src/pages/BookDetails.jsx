@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import Sidebar from "../components/Sidebar";
+import AppNav from "../components/AppNav";
+import AppSidebar from "../components/AppSideBar";
 import "../styles/BookDetails.css";
 
 export default function BookDetails() {
@@ -11,6 +12,20 @@ export default function BookDetails() {
   const [error, setError] = useState("");
 
   const token = localStorage.getItem("token");
+
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:8000/api/auth/logout/", {
+        method: "POST",
+        headers: { Authorization: `Token ${token}` },
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/auth");
+  };
 
   useEffect(() => {
     if (!token) {
@@ -40,17 +55,20 @@ export default function BookDetails() {
 
   if (loading)
     return (
-      <div className="page-wrapper">
-        <Sidebar />
+      <div>
+        <AppNav onLogout={handleLogout} />
+        <AppSidebar />
         <main className="page-main">
           <p>Loading...</p>
         </main>
       </div>
     );
+
   if (error)
     return (
-      <div className="page-wrapper">
-        <Sidebar />
+      <div>
+        <AppNav onLogout={handleLogout} />
+        <AppSidebar />
         <main className="page-main">
           <p>{error}</p>
         </main>
@@ -58,8 +76,9 @@ export default function BookDetails() {
     );
 
   return (
-    <div className="page-wrapper">
-      <Sidebar />
+    <div>
+      <AppNav onLogout={handleLogout} />
+      <AppSidebar />
       <main className="page-main">
         <h1 className="page-title">Book Details</h1>
         <div className="bookdetails-card">

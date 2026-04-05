@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar.jsx";
+import AppNav from "../components/AppNav";
+import AppSidebar from "../components/AppSideBar";
 import "../styles/Profile.css";
 
 export default function Profile() {
@@ -80,10 +81,25 @@ export default function Profile() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:8000/api/auth/logout/", {
+        method: "POST",
+        headers: { Authorization: `Token ${token}` },
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/auth");
+  };
+
   if (loading)
     return (
-      <div className="page-wrapper">
-        <Sidebar />
+      <div>
+        <AppNav onLogout={handleLogout} />
+        <AppSidebar />
         <main className="page-main">
           <p>Loading...</p>
         </main>
@@ -91,12 +107,12 @@ export default function Profile() {
     );
 
   return (
-    <div className="page-wrapper">
-      <Sidebar />
+    <div>
+      <AppNav onLogout={handleLogout} />
+      <AppSidebar />
       <main className="page-main">
         <h1 className="page-title">User Profile</h1>
 
-        {/* User Info Card */}
         <div className="profile-card">
           <h2>User Information</h2>
           <div className="profile-info">
@@ -136,7 +152,6 @@ export default function Profile() {
           )}
         </div>
 
-        {/* Swap History */}
         <div className="profile-card">
           <h2>Swap History</h2>
           <table className="swap-table">

@@ -4,13 +4,15 @@
   box-sizing: border-box;
   font-family: "Poppins", sans-serif;
 }
-
 .dashboard-wrapper {
   display: flex;
-  min-height: 100vh;
-  background-color: #f5f0ee;
+  flex-direction: column;
 }
 
+.dashboard-body {
+  display: flex;
+  flex: 1;
+}
 /* Sidebar */
 .sidebar {
   width: 240px;
@@ -21,7 +23,7 @@
   padding: 30px 20px;
   gap: 10px;
   position: fixed;
-  top: 0;
+  top: 101px;
   left: 0;
 }
 
@@ -71,6 +73,7 @@
 /* Main Content */
 .dashboard-main {
   margin-left: 240px;
+  margin-top: 70px;
   padding: 40px;
   flex: 1;
   display: flex;

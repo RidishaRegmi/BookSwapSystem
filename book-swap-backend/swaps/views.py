@@ -19,6 +19,10 @@ def create_swap_request(request):
             user=swap.requested_book.owner,
             message=f'{request.user.full_name or request.user.username} sent you a swap request for your book "{swap.requested_book.title}".',
         )
+        Notification.objects.create(
+    user=request.user,
+    message=f'Your swap request for "{swap.requested_book.title}" by {swap.requested_book.owner.full_name or swap.requested_book.owner.username} has been sent successfully.',
+)
         return Response(SwapRequestSerializer(swap).data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

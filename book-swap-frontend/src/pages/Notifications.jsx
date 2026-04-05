@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
+import AppNav from "../components/AppNav";
+import AppSidebar from "../components/AppSideBar";
 import "../styles/Notifications.css";
 
 export default function Notifications() {
@@ -56,10 +57,25 @@ export default function Notifications() {
     return `${Math.floor(diff / 86400)} days ago`;
   };
 
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:8000/api/auth/logout/", {
+        method: "POST",
+        headers: { Authorization: `Token ${token}` },
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/auth");
+  };
+
   if (loading)
     return (
-      <div className="page-wrapper">
-        <Sidebar />
+      <div>
+        <AppNav onLogout={handleLogout} />
+        <AppSidebar />
         <main className="page-main">
           <p>Loading...</p>
         </main>
@@ -67,8 +83,9 @@ export default function Notifications() {
     );
 
   return (
-    <div className="page-wrapper">
-      <Sidebar />
+    <div>
+      <AppNav onLogout={handleLogout} />
+      <AppSidebar />
       <main className="page-main">
         <h1 className="page-title">Notifications</h1>
         <div className="notif-list">

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
+import AppNav from "../components/AppNav";
+import AppSidebar from "../components/AppSideBar";
 import "../styles/AddBook.css";
 
 export default function AddBook() {
@@ -13,6 +14,22 @@ export default function AddBook() {
   const [image, setImage] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const token = localStorage.getItem("token");
+
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:8000/api/auth/logout/", {
+        method: "POST",
+        headers: { Authorization: `Token ${token}` },
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/auth");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,6 +48,7 @@ export default function AddBook() {
     formData.append("category", category);
     formData.append("condition", condition);
     formData.append("description", description);
+    formData.append("is_available_for_swap", true);
     if (image) formData.append("image", image);
 
     try {
@@ -57,8 +75,9 @@ export default function AddBook() {
   };
 
   return (
-    <div className="page-wrapper">
-      <Sidebar />
+    <div>
+      <AppNav onLogout={handleLogout} />
+      <AppSidebar />
       <main className="page-main">
         <h1 className="page-title">Add a New Book</h1>
         <div className="addbook-card">

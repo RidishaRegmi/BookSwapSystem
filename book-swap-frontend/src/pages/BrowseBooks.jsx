@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar.jsx";
+import AppNav from "../components/AppNav";
+import AppSidebar from "../components/AppSideBar";
 import "../styles/BrowseBooks.css";
 
 const categories = [
@@ -21,9 +22,24 @@ export default function BrowseBooks() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [condition, setCondition] = useState("All");
+  const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(true);
 
   const token = localStorage.getItem("token");
+
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:8000/api/auth/logout/", {
+        method: "POST",
+        headers: { Authorization: `Token ${token}` },
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/auth");
+  };
 
   useEffect(() => {
     if (!token) {
@@ -31,7 +47,7 @@ export default function BrowseBooks() {
       return;
     }
     fetchBooks();
-  }, [search, category, condition]);
+  }, [search, category, condition, location]);
 
   const fetchBooks = async () => {
     setLoading(true);
@@ -40,6 +56,7 @@ export default function BrowseBooks() {
       if (search) url += `search=${search}&`;
       if (category !== "All") url += `category=${category}&`;
       if (condition !== "All") url += `condition=${condition}&`;
+      if (location) url += `location=${location}&`;
 
       const response = await fetch(url, {
         headers: { Authorization: `Token ${token}` },
@@ -54,42 +71,59 @@ export default function BrowseBooks() {
   };
 
   return (
-    <div className="page-wrapper">
-      <Sidebar />
+    <div>
+      <AppNav onLogout={handleLogout} />
+      <AppSidebar />
       <main className="page-main">
         <h1 className="page-title">Browse Books</h1>
 
-        {/* Search and Filters */}
         <div className="browse-filters">
-          <input
-            type="text"
-            placeholder="Search by title or author..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="search-input"
-          />
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          >
-            {categories.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
-          <select
-            value={condition}
-            onChange={(e) => setCondition(e.target.value)}
-          >
-            {conditions.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
+          <div className="filter-group">
+            <label>Search</label>
+            <input
+              type="text"
+              placeholder="Search by title or author..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="search-input"
+            />
+          </div>
+          <div className="filter-group">
+            <label>Category</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+            >
+              {categories.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+          <div className="filter-group">
+            <label>Condition</label>
+            <select
+              value={condition}
+              onChange={(e) => setCondition(e.target.value)}
+            >
+              {conditions.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+          <div className="filter-group">
+            <label>Location</label>
+            <input
+              type="text"
+              placeholder="Filter by city..."
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="location-filter"
+            />
+          </div>
         </div>
 
-        {/* Results Count */}
         <p className="results-count">{books.length} book(s) found</p>
 
-        {/* Books Grid */}
         {loading ? (
           <p>Loading books...</p>
         ) : books.length > 0 ? (

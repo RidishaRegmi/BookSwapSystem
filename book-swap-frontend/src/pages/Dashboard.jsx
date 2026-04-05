@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import AppNav from "../components/AppNav";
+import AppSidebar from "../components/AppSideBar";
 import "../styles/Dashboard.css";
 
 export default function Dashboard() {
@@ -55,10 +57,10 @@ export default function Dashboard() {
 
       const allSwaps = [...(incomingData || []), ...(sentData || [])];
       const activeSwaps = allSwaps.filter(
-        (s) => s.status === "pending" || s.status === "accepted",
+        (s) => s.status === "Pending" || s.status === "Accepted",
       ).length;
       const completedSwaps = allSwaps.filter(
-        (s) => s.status === "completed",
+        (s) => s.status === "Completed",
       ).length;
 
       setStats({
@@ -93,25 +95,9 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="dashboard-wrapper">
-      <aside className="sidebar">
-        <div className="sidebar-logo">Book Swap System</div>
-        <nav className="sidebar-nav">
-          <button onClick={() => navigate("/profile")}>My Profile</button>
-          <button onClick={() => navigate("/add-book")}>My Books</button>
-          <button onClick={() => navigate("/browse")}>Browse Books</button>
-          <button onClick={() => navigate("/swap-management")}>
-            Swap Requests
-          </button>
-          <button onClick={() => navigate("/notifications")}>
-            Notifications
-          </button>
-        </nav>
-        <button className="logout-btn" onClick={handleLogout}>
-          Logout
-        </button>
-      </aside>
-
+    <div>
+      <AppNav onLogout={handleLogout} />
+      <AppSidebar onLogout={handleLogout} />
       <main className="dashboard-main">
         <div className="dashboard-header">
           <h1>

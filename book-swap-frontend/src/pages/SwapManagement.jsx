@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
+import AppNav from "../components/AppNav";
+import AppSidebar from "../components/AppSideBar";
 import "../styles/SwapManagement.css";
 
 export default function SwapManagement() {
@@ -11,6 +12,20 @@ export default function SwapManagement() {
   const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
+
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:8000/api/auth/logout/", {
+        method: "POST",
+        headers: { Authorization: `Token ${token}` },
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/auth");
+  };
 
   useEffect(() => {
     if (!token) {
@@ -99,8 +114,9 @@ export default function SwapManagement() {
 
   if (loading)
     return (
-      <div className="page-wrapper">
-        <Sidebar />
+      <div>
+        <AppNav onLogout={handleLogout} />
+        <AppSidebar />
         <main className="page-main">
           <p>Loading...</p>
         </main>
@@ -108,8 +124,9 @@ export default function SwapManagement() {
     );
 
   return (
-    <div className="page-wrapper">
-      <Sidebar />
+    <div>
+      <AppNav onLogout={handleLogout} />
+      <AppSidebar />
       <main className="page-main">
         <h1 className="page-title">Swap Management</h1>
 
@@ -148,8 +165,8 @@ export default function SwapManagement() {
                 ) : (
                   incomingRequests.map((req) => (
                     <tr key={req.id}>
-                      <td>{req.book_requested_title}</td>
-                      <td>{req.book_offered_title}</td>
+                      <td>{req.requested_book_title}</td>
+                      <td>{req.offered_book_title}</td>
                       <td>{req.requester_name}</td>
                       <td>
                         <span
@@ -159,7 +176,7 @@ export default function SwapManagement() {
                         </span>
                       </td>
                       <td className="action-cell">
-                        {req.status === "pending" && (
+                        {req.status === "Pending" && (
                           <>
                             <button
                               className="action-btn accept"
@@ -175,7 +192,7 @@ export default function SwapManagement() {
                             </button>
                           </>
                         )}
-                        {req.status === "accepted" && (
+                        {req.status === "Accepted" && (
                           <button
                             className="action-btn complete"
                             onClick={() => handleComplete(req.id)}
@@ -207,9 +224,9 @@ export default function SwapManagement() {
                 ) : (
                   sentRequests.map((req) => (
                     <tr key={req.id}>
-                      <td>{req.book_requested_title}</td>
-                      <td>{req.book_offered_title}</td>
-                      <td>{req.owner_name}</td>
+                      <td>{req.requested_book_title}</td>
+                      <td>{req.offered_book_title}</td>
+                      <td>{req.recipient_name}</td>
                       <td>
                         <span
                           className={`status-badge ${req.status.toLowerCase()}`}

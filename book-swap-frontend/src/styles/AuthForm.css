@@ -142,3 +142,30 @@ form p.error {
   font-size: 13px;
   text-align: left;
 }
+
+.location-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.location-row input {
+  flex: 1;
+}
+
+.location-btn {
+  padding: 14px 14px !important;
+  background: #603226 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 12px !important;
+  cursor: pointer !important;
+  font-size: 12px !important;
+  white-space: nowrap !important;
+  font-family: "Poppins", sans-serif !important;
+  transition: filter 0.2s ease !important;
+}
+
+.location-btn:hover {
+  filter: brightness(1.15) !important;
+}

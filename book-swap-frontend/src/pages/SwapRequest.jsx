@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
+import AppNav from "../components/AppNav";
+import AppSidebar from "../components/AppSideBar";
 import "../styles/SwapRequest.css";
 
 export default function SwapRequest() {
@@ -14,6 +15,20 @@ export default function SwapRequest() {
   const [error, setError] = useState("");
 
   const token = localStorage.getItem("token");
+
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:8000/api/auth/logout/", {
+        method: "POST",
+        headers: { Authorization: `Token ${token}` },
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/auth");
+  };
 
   useEffect(() => {
     if (!token) {
@@ -63,8 +78,8 @@ export default function SwapRequest() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          book_requested: bookId,
-          book_offered: selectedBook,
+          requested_book: parseInt(bookId),
+          offered_book: parseInt(selectedBook),
           message: message,
         }),
       });
@@ -83,8 +98,9 @@ export default function SwapRequest() {
 
   if (loading)
     return (
-      <div className="page-wrapper">
-        <Sidebar />
+      <div>
+        <AppNav onLogout={handleLogout} />
+        <AppSidebar />
         <main className="page-main">
           <p>Loading...</p>
         </main>
@@ -92,8 +108,9 @@ export default function SwapRequest() {
     );
 
   return (
-    <div className="page-wrapper">
-      <Sidebar />
+    <div>
+      <AppNav onLogout={handleLogout} />
+      <AppSidebar />
       <main className="page-main">
         <h1 className="page-title">Request a Swap</h1>
 

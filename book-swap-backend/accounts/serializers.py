@@ -6,10 +6,11 @@ class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True)
     full_name = serializers.CharField(required=False, allow_blank=True)
+    location = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = User
-        fields = ('email', 'password', 'full_name')
+        fields = ('email', 'password', 'full_name', 'location')
 
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
@@ -22,6 +23,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             email=validated_data['email'],
             password=validated_data['password'],
             full_name=validated_data.get('full_name', ''),
+            location=validated_data.get('location', ''),
         )
         return user
 
