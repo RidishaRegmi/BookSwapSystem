@@ -1,90 +1,57 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar.jsx";
 import "../styles/BrowseBooks.css";
 
-// Placeholder book data - will be replaced with real backend data later
-const placeholderBooks = [
-  {
-    id: 1,
-    title: "The Great Gatsby",
-    author: "F. Scott Fitzgerald",
-    category: "Fiction",
-    condition: "Good",
-    location: "Kathmandu",
-  },
-  {
-    id: 2,
-    title: "Atomic Habits",
-    author: "James Clear",
-    category: "Self-help",
-    condition: "Like New",
-    location: "Pokhara",
-  },
-  {
-    id: 3,
-    title: "Introduction to Algorithms",
-    author: "Thomas H. Cormen",
-    category: "Academic",
-    condition: "Fair",
-    location: "Kathmandu",
-  },
-  {
-    id: 4,
-    title: "To Kill a Mockingbird",
-    author: "Harper Lee",
-    category: "Fiction",
-    condition: "Good",
-    location: "Lalitpur",
-  },
-  {
-    id: 5,
-    title: "The Alchemist",
-    author: "Paulo Coelho",
-    category: "Fiction",
-    condition: "Like New",
-    location: "Kathmandu",
-  },
-  {
-    id: 6,
-    title: "Deep Work",
-    author: "Cal Newport",
-    category: "Self-help",
-    condition: "Good",
-    location: "Bhaktapur",
-  },
-];
-
 const categories = [
   "All",
   "Fiction",
-  "Non-fiction",
-  "Academic",
-  "Self-help",
-  "Reference",
+  "Non-Fiction",
+  "Science",
+  "History",
+  "Technology",
+  "Literature",
+  "Other",
 ];
-const conditions = ["All", "Like New", "Good", "Fair"];
-const locations = ["All", "Kathmandu", "Pokhara", "Lalitpur", "Bhaktapur"];
+const conditions = ["All", "New", "Like New", "Good", "Fair", "Poor"];
 
 export default function BrowseBooks() {
   const navigate = useNavigate();
+  const [books, setBooks] = useState([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [condition, setCondition] = useState("All");
-  const [location, setLocation] = useState("All");
+  const [loading, setLoading] = useState(true);
 
-  const filtered = placeholderBooks.filter((book) => {
-    const matchesSearch =
-      book.title.toLowerCase().includes(search.toLowerCase()) ||
-      book.author.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = category === "All" || book.category === category;
-    const matchesCondition =
-      condition === "All" || book.condition === condition;
-    const matchesLocation = location === "All" || book.location === location;
-    return (
-      matchesSearch && matchesCategory && matchesCondition && matchesLocation
-    );
-  });
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    if (!token) {
+      navigate("/auth");
+      return;
+    }
+    fetchBooks();
+  }, [search, category, condition]);
+
+  const fetchBooks = async () => {
+    setLoading(true);
+    try {
+      let url = "http://localhost:8000/api/books/?";
+      if (search) url += `search=${search}&`;
+      if (category !== "All") url += `category=${category}&`;
+      if (condition !== "All") url += `condition=${condition}&`;
+
+      const response = await fetch(url, {
+        headers: { Authorization: `Token ${token}` },
+      });
+      const data = await response.json();
+      setBooks(data);
+    } catch (error) {
+      console.error("Error fetching books:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="page-wrapper">
@@ -117,26 +84,33 @@ export default function BrowseBooks() {
               <option key={c}>{c}</option>
             ))}
           </select>
-          <select
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-          >
-            {locations.map((l) => (
-              <option key={l}>{l}</option>
-            ))}
-          </select>
         </div>
 
         {/* Results Count */}
-        <p className="results-count">{filtered.length} book(s) found</p>
+        <p className="results-count">{books.length} book(s) found</p>
 
         {/* Books Grid */}
-        {filtered.length > 0 ? (
+        {loading ? (
+          <p>Loading books...</p>
+        ) : books.length > 0 ? (
           <div className="books-grid">
-            {filtered.map((book) => (
+            {books.map((book) => (
               <div key={book.id} className="book-card">
                 <div className="book-image-placeholder">
-                  <span>📚</span>
+                  {book.image ? (
+                    <img
+                      src={`http://localhost:8000${book.image}`}
+                      alt={book.title}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        borderRadius: "8px",
+                      }}
+                    />
+                  ) : (
+                    <span>📚</span>
+                  )}
                 </div>
                 <div className="book-info">
                   <h3>{book.title}</h3>
@@ -144,7 +118,6 @@ export default function BrowseBooks() {
                   <div className="book-tags">
                     <span className="tag">{book.category}</span>
                     <span className="tag">{book.condition}</span>
-                    <span className="tag location-tag">📍 {book.location}</span>
                   </div>
                 </div>
                 <button

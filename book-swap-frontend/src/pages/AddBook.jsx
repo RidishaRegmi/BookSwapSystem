@@ -1,18 +1,59 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import "../styles/AddBook.css";
 
 export default function AddBook() {
+  const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [category, setCategory] = useState("");
   const [condition, setCondition] = useState("");
   const [description, setDescription] = useState("");
   const [image, setImage] = useState(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert("Book added successfully!");
+    setLoading(true);
+    setError("");
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/auth");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("author", author);
+    formData.append("category", category);
+    formData.append("condition", condition);
+    formData.append("description", description);
+    if (image) formData.append("image", image);
+
+    try {
+      const response = await fetch("http://localhost:8000/api/books/", {
+        method: "POST",
+        headers: {
+          Authorization: `Token ${token}`,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        alert("Book added successfully!");
+        navigate("/dashboard");
+      } else {
+        const data = await response.json();
+        setError(data.detail || "Failed to add book. Please try again.");
+      }
+    } catch (err) {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -21,6 +62,9 @@ export default function AddBook() {
       <main className="page-main">
         <h1 className="page-title">Add a New Book</h1>
         <div className="addbook-card">
+          {error && (
+            <p style={{ color: "red", marginBottom: "12px" }}>{error}</p>
+          )}
           <form className="addbook-form" onSubmit={handleSubmit}>
             <div className="form-group">
               <label>Book Title</label>
@@ -91,8 +135,8 @@ export default function AddBook() {
                 onChange={(e) => setImage(e.target.files[0])}
               />
             </div>
-            <button type="submit" className="submit-btn">
-              Add Book
+            <button type="submit" className="submit-btn" disabled={loading}>
+              {loading ? "Adding..." : "Add Book"}
             </button>
           </form>
         </div>

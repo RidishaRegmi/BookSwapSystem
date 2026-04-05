@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import "../styles/SwapRequest.css";
@@ -8,25 +8,88 @@ export default function SwapRequest() {
   const navigate = useNavigate();
   const [selectedBook, setSelectedBook] = useState("");
   const [message, setMessage] = useState("");
+  const [requestedBook, setRequestedBook] = useState(null);
+  const [myBooks, setMyBooks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const requestedBook = {
-    id: bookId,
-    title: "The Great Gatsby",
-    author: "F. Scott Fitzgerald",
-    condition: "Good",
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    if (!token) {
+      navigate("/auth");
+      return;
+    }
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      // Fetch the requested book details
+      const bookRes = await fetch(
+        `http://localhost:8000/api/books/${bookId}/`,
+        {
+          headers: { Authorization: `Token ${token}` },
+        },
+      );
+      const bookData = await bookRes.json();
+      setRequestedBook(bookData);
+
+      // Fetch my books to offer
+      const myBooksRes = await fetch(
+        "http://localhost:8000/api/books/my-books/",
+        {
+          headers: { Authorization: `Token ${token}` },
+        },
+      );
+      const myBooksData = await myBooksRes.json();
+      setMyBooks(myBooksData);
+    } catch (err) {
+      setError("Something went wrong loading the data.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const myBooks = [
-    { id: 1, title: "To Kill a Mockingbird" },
-    { id: 2, title: "1984" },
-    { id: 3, title: "Pride and Prejudice" },
-  ];
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert("Swap request submitted!");
-    navigate("/swap-management");
+    setError("");
+
+    try {
+      const response = await fetch("http://localhost:8000/api/swaps/", {
+        method: "POST",
+        headers: {
+          Authorization: `Token ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          book_requested: bookId,
+          book_offered: selectedBook,
+          message: message,
+        }),
+      });
+
+      if (response.ok) {
+        alert("Swap request submitted!");
+        navigate("/swap-management");
+      } else {
+        const data = await response.json();
+        setError(data.detail || "Failed to submit swap request.");
+      }
+    } catch (err) {
+      setError("Something went wrong. Please try again.");
+    }
   };
+
+  if (loading)
+    return (
+      <div className="page-wrapper">
+        <Sidebar />
+        <main className="page-main">
+          <p>Loading...</p>
+        </main>
+      </div>
+    );
 
   return (
     <div className="page-wrapper">
@@ -34,20 +97,24 @@ export default function SwapRequest() {
       <main className="page-main">
         <h1 className="page-title">Request a Swap</h1>
 
-        <div className="swapreq-card">
-          <h2>Requested Book</h2>
-          <div className="swapreq-bookinfo">
-            <p>
-              <span>Title:</span> {requestedBook.title}
-            </p>
-            <p>
-              <span>Author:</span> {requestedBook.author}
-            </p>
-            <p>
-              <span>Condition:</span> {requestedBook.condition}
-            </p>
+        {error && <p style={{ color: "red", marginBottom: "12px" }}>{error}</p>}
+
+        {requestedBook && (
+          <div className="swapreq-card">
+            <h2>Requested Book</h2>
+            <div className="swapreq-bookinfo">
+              <p>
+                <span>Title:</span> {requestedBook.title}
+              </p>
+              <p>
+                <span>Author:</span> {requestedBook.author}
+              </p>
+              <p>
+                <span>Condition:</span> {requestedBook.condition}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="swapreq-card">
           <h2>Your Offer</h2>

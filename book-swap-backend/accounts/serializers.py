@@ -1,25 +1,27 @@
-
-from django.contrib.auth.models import User
 from rest_framework import serializers
+from .models import User
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True)
+    full_name = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = User
-        fields = ('email', 'password')
+        fields = ('email', 'password', 'full_name')
 
     def validate_email(self, value):
-        if User.objects.filter(username=value).exists():
+        if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("A user with that email already exists.")
         return value
 
     def create(self, validated_data):
         user = User.objects.create_user(
-            username=validated_data['email'],  # using email as username 
+            username=validated_data['email'],
             email=validated_data['email'],
-            password=validated_data['password']
+            password=validated_data['password'],
+            full_name=validated_data.get('full_name', ''),
         )
         return user
 
@@ -32,12 +34,23 @@ class LoginSerializer(serializers.Serializer):
         email = data.get('email')
         password = data.get('password')
 
-        if email and password:
-            user = User.objects.filter(username=email).first()
-            if user and user.check_password(password):
-                data['user'] = user
-                return data
-            else:
-                raise serializers.ValidationError("Invalid email or password.")
-        else:
-            raise serializers.ValidationError("Must include 'email' and 'password'.")
+        user = User.objects.filter(email=email).first()
+        if user is None or not user.check_password(password):
+            raise serializers.ValidationError("Invalid email or password.")
+        if user.is_blocked:
+            raise serializers.ValidationError("This account has been blocked.")
+        data['user'] = user
+        return data
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email', 'full_name', 'is_admin', 'location', 'created_at')
+        read_only_fields = ('id', 'email', 'created_at', 'is_admin')
+
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email', 'full_name', 'is_admin', 'is_blocked', 'location', 'created_at')

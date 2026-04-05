@@ -1,62 +1,111 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import "../styles/SwapManagement.css";
 
 export default function SwapManagement() {
   const [activeTab, setActiveTab] = useState("incoming");
+  const [incomingRequests, setIncomingRequests] = useState([]);
+  const [sentRequests, setSentRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  const incomingRequests = [
-    {
-      id: 1,
-      requestedBook: "The Great Gatsby",
-      offeredBook: "To Kill a Mockingbird",
-      requester: "John Doe",
-      status: "Pending",
-    },
-    {
-      id: 2,
-      requestedBook: "1984",
-      offeredBook: "Brave New World",
-      requester: "Alice Brown",
-      status: "Accepted",
-    },
-    {
-      id: 3,
-      requestedBook: "Pride and Prejudice",
-      offeredBook: "Jane Eyre",
-      requester: "Bob Wilson",
-      status: "Rejected",
-    },
-  ];
+  const token = localStorage.getItem("token");
 
-  const sentRequests = [
-    {
-      id: 4,
-      requestedBook: "The Catcher in the Rye",
-      offeredBook: "The Great Gatsby",
-      recipient: "Sarah Miller",
-      status: "Pending",
-    },
-    {
-      id: 5,
-      requestedBook: "Moby Dick",
-      offeredBook: "1984",
-      recipient: "Tom Clark",
-      status: "Completed",
-    },
-  ];
+  useEffect(() => {
+    if (!token) {
+      navigate("/auth");
+      return;
+    }
+    fetchSwaps();
+  }, []);
 
-  const handleAccept = (id) => {
-    alert("Request " + id + " accepted!");
+  const fetchSwaps = async () => {
+    try {
+      const incomingRes = await fetch(
+        "http://localhost:8000/api/swaps/incoming/",
+        {
+          headers: { Authorization: `Token ${token}` },
+        },
+      );
+      const incomingData = await incomingRes.json();
+      setIncomingRequests(incomingData);
+
+      const sentRes = await fetch("http://localhost:8000/api/swaps/sent/", {
+        headers: { Authorization: `Token ${token}` },
+      });
+      const sentData = await sentRes.json();
+      setSentRequests(sentData);
+    } catch (error) {
+      console.error("Error fetching swaps:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleReject = (id) => {
-    alert("Request " + id + " rejected!");
+  const handleAccept = async (id) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8000/api/swaps/${id}/accept/`,
+        {
+          method: "PUT",
+          headers: { Authorization: `Token ${token}` },
+        },
+      );
+      if (response.ok) {
+        alert("Request accepted!");
+        fetchSwaps();
+      }
+    } catch (error) {
+      console.error("Error accepting swap:", error);
+    }
   };
 
-  const handleComplete = (id) => {
-    alert("Swap " + id + " marked as completed!");
+  const handleReject = async (id) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8000/api/swaps/${id}/reject/`,
+        {
+          method: "PUT",
+          headers: { Authorization: `Token ${token}` },
+        },
+      );
+      if (response.ok) {
+        alert("Request rejected!");
+        fetchSwaps();
+      }
+    } catch (error) {
+      console.error("Error rejecting swap:", error);
+    }
   };
+
+  const handleComplete = async (id) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8000/api/swaps/${id}/complete/`,
+        {
+          method: "PUT",
+          headers: { Authorization: `Token ${token}` },
+        },
+      );
+      if (response.ok) {
+        alert("Swap marked as completed!");
+        fetchSwaps();
+      }
+    } catch (error) {
+      console.error("Error completing swap:", error);
+    }
+  };
+
+  if (loading)
+    return (
+      <div className="page-wrapper">
+        <Sidebar />
+        <main className="page-main">
+          <p>Loading...</p>
+        </main>
+      </div>
+    );
 
   return (
     <div className="page-wrapper">
@@ -92,46 +141,52 @@ export default function SwapManagement() {
                 </tr>
               </thead>
               <tbody>
-                {incomingRequests.map((req) => (
-                  <tr key={req.id}>
-                    <td>{req.requestedBook}</td>
-                    <td>{req.offeredBook}</td>
-                    <td>{req.requester}</td>
-                    <td>
-                      <span
-                        className={`status-badge ${req.status.toLowerCase()}`}
-                      >
-                        {req.status}
-                      </span>
-                    </td>
-                    <td className="action-cell">
-                      {req.status === "Pending" && (
-                        <>
-                          <button
-                            className="action-btn accept"
-                            onClick={() => handleAccept(req.id)}
-                          >
-                            Accept
-                          </button>
-                          <button
-                            className="action-btn reject"
-                            onClick={() => handleReject(req.id)}
-                          >
-                            Reject
-                          </button>
-                        </>
-                      )}
-                      {req.status === "Accepted" && (
-                        <button
-                          className="action-btn complete"
-                          onClick={() => handleComplete(req.id)}
-                        >
-                          Mark Completed
-                        </button>
-                      )}
-                    </td>
+                {incomingRequests.length === 0 ? (
+                  <tr>
+                    <td colSpan="5">No incoming requests.</td>
                   </tr>
-                ))}
+                ) : (
+                  incomingRequests.map((req) => (
+                    <tr key={req.id}>
+                      <td>{req.book_requested_title}</td>
+                      <td>{req.book_offered_title}</td>
+                      <td>{req.requester_name}</td>
+                      <td>
+                        <span
+                          className={`status-badge ${req.status.toLowerCase()}`}
+                        >
+                          {req.status}
+                        </span>
+                      </td>
+                      <td className="action-cell">
+                        {req.status === "pending" && (
+                          <>
+                            <button
+                              className="action-btn accept"
+                              onClick={() => handleAccept(req.id)}
+                            >
+                              Accept
+                            </button>
+                            <button
+                              className="action-btn reject"
+                              onClick={() => handleReject(req.id)}
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
+                        {req.status === "accepted" && (
+                          <button
+                            className="action-btn complete"
+                            onClick={() => handleComplete(req.id)}
+                          >
+                            Mark Completed
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           ) : (
@@ -145,20 +200,26 @@ export default function SwapManagement() {
                 </tr>
               </thead>
               <tbody>
-                {sentRequests.map((req) => (
-                  <tr key={req.id}>
-                    <td>{req.requestedBook}</td>
-                    <td>{req.offeredBook}</td>
-                    <td>{req.recipient}</td>
-                    <td>
-                      <span
-                        className={`status-badge ${req.status.toLowerCase()}`}
-                      >
-                        {req.status}
-                      </span>
-                    </td>
+                {sentRequests.length === 0 ? (
+                  <tr>
+                    <td colSpan="4">No sent requests.</td>
                   </tr>
-                ))}
+                ) : (
+                  sentRequests.map((req) => (
+                    <tr key={req.id}>
+                      <td>{req.book_requested_title}</td>
+                      <td>{req.book_offered_title}</td>
+                      <td>{req.owner_name}</td>
+                      <td>
+                        <span
+                          className={`status-badge ${req.status.toLowerCase()}`}
+                        >
+                          {req.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           )}

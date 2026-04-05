@@ -1,33 +1,94 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar.jsx";
 import "../styles/Profile.css";
 
 export default function Profile() {
-  // Placeholder data - will be replaced with real backend data later
-  const user = {
-    fullName: "User Full Name",
-    email: "user@example.com",
+  const [user, setUser] = useState({ full_name: "", email: "" });
+  const [swapHistory, setSwapHistory] = useState([]);
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    if (!token) {
+      navigate("/auth");
+      return;
+    }
+    fetchProfile();
+    fetchSwapHistory();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/api/auth/profile/", {
+        headers: { Authorization: `Token ${token}` },
+      });
+      const data = await response.json();
+      setUser(data);
+      setEditName(data.full_name);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const swapHistory = [
-    {
-      bookTitle: "Book Title 1",
-      partner: "Swap Partner A",
-      date: "2025-01-15",
-      status: "Completed",
-    },
-    {
-      bookTitle: "Book Title 2",
-      partner: "Swap Partner B",
-      date: "2025-02-20",
-      status: "Completed",
-    },
-    {
-      bookTitle: "Book Title 3",
-      partner: "Swap Partner C",
-      date: "2025-03-10",
-      status: "Pending",
-    },
-  ];
+  const fetchSwapHistory = async () => {
+    try {
+      const incomingRes = await fetch(
+        "http://localhost:8000/api/swaps/incoming/",
+        {
+          headers: { Authorization: `Token ${token}` },
+        },
+      );
+      const incomingData = await incomingRes.json();
+
+      const sentRes = await fetch("http://localhost:8000/api/swaps/sent/", {
+        headers: { Authorization: `Token ${token}` },
+      });
+      const sentData = await sentRes.json();
+
+      const allSwaps = [...(incomingData || []), ...(sentData || [])];
+      setSwapHistory(allSwaps);
+    } catch (error) {
+      console.error("Error fetching swap history:", error);
+    }
+  };
+
+  const handleEditSave = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/api/auth/profile/", {
+        method: "PUT",
+        headers: {
+          Authorization: `Token ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ full_name: editName }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data);
+        setEditing(false);
+        alert("Profile updated successfully!");
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    }
+  };
+
+  if (loading)
+    return (
+      <div className="page-wrapper">
+        <Sidebar />
+        <main className="page-main">
+          <p>Loading...</p>
+        </main>
+      </div>
+    );
 
   return (
     <div className="page-wrapper">
@@ -40,13 +101,39 @@ export default function Profile() {
           <h2>User Information</h2>
           <div className="profile-info">
             <p>
-              <span>Name:</span> {user.fullName}
+              <span>Name:</span>{" "}
+              {editing ? (
+                <input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: "6px",
+                    border: "1px solid #ccc",
+                  }}
+                />
+              ) : (
+                user.full_name
+              )}
             </p>
             <p>
               <span>Email:</span> {user.email}
             </p>
           </div>
-          <button className="edit-btn">Edit Profile</button>
+          {editing ? (
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button className="edit-btn" onClick={handleEditSave}>
+                Save
+              </button>
+              <button className="edit-btn" onClick={() => setEditing(false)}>
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button className="edit-btn" onClick={() => setEditing(true)}>
+              Edit Profile
+            </button>
+          )}
         </div>
 
         {/* Swap History */}
@@ -62,20 +149,26 @@ export default function Profile() {
               </tr>
             </thead>
             <tbody>
-              {swapHistory.map((swap, index) => (
-                <tr key={index}>
-                  <td>{swap.bookTitle}</td>
-                  <td>{swap.partner}</td>
-                  <td>{swap.date}</td>
-                  <td>
-                    <span
-                      className={`status-badge ${swap.status.toLowerCase()}`}
-                    >
-                      {swap.status}
-                    </span>
-                  </td>
+              {swapHistory.length === 0 ? (
+                <tr>
+                  <td colSpan="4">No swap history yet.</td>
                 </tr>
-              ))}
+              ) : (
+                swapHistory.map((swap, index) => (
+                  <tr key={index}>
+                    <td>{swap.book_requested_title}</td>
+                    <td>{swap.requester_name || swap.owner_name}</td>
+                    <td>{new Date(swap.created_at).toLocaleDateString()}</td>
+                    <td>
+                      <span
+                        className={`status-badge ${swap.status.toLowerCase()}`}
+                      >
+                        {swap.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

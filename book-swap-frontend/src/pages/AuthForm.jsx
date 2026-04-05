@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/AuthForm.css";
 
 export default function AuthForm() {
@@ -6,35 +7,58 @@ export default function AuthForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // const url = isLogin
-    //   ? "http://localhost:8000/api/auth/login/"
-    //   : "http://localhost:8000/api/auth/signup/";
-
-    // const payload = { email, password };
+    setError("");
+    setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:8000/api/auth/login/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(email, password),
-      });
+      if (isLogin) {
+        // LOGIN
+        const res = await fetch("http://localhost:8000/api/auth/login/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
 
-      const data = await res.json();
-      if (res.ok) {
-        console.log("Success:", data);
-        alert(isLogin ? "Logged in!" : "Account created!");
+        const data = await res.json();
+
+        if (res.ok) {
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("user", JSON.stringify(data.user));
+          navigate("/dashboard");
+        } else {
+          setError(data.non_field_errors?.[0] || "Invalid email or password.");
+        }
       } else {
-        alert("Error: " + (data.error || JSON.stringify(data)));
+        // REGISTER
+        const res = await fetch("http://localhost:8000/api/auth/register/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, full_name: fullName }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("user", JSON.stringify(data.user));
+          navigate("/dashboard");
+        } else {
+          setError(
+            data.email?.[0] || data.password?.[0] || "Registration failed.",
+          );
+        }
       }
     } catch (err) {
-      console.error(err);
-      alert("Network error. Is Django running?");
+      setError("Network error. Make sure Django is running!");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -44,21 +68,27 @@ export default function AuthForm() {
         <div className="form-toggle">
           <button
             className={isLogin ? "active" : ""}
-            onClick={() => setIsLogin(true)}
+            onClick={() => {
+              setIsLogin(true);
+              setError("");
+            }}
           >
-            {" "}
-            Login{" "}
+            Login
           </button>
           <button
             className={!isLogin ? "active" : ""}
-            onClick={() => setIsLogin(false)}
+            onClick={() => {
+              setIsLogin(false);
+              setError("");
+            }}
           >
-            {" "}
-            Register{" "}
+            Register
           </button>
         </div>
 
         <form onSubmit={handleSubmit}>
+          {error && <p style={{ color: "red", fontSize: "13px" }}>{error}</p>}
+
           {isLogin ? (
             <>
               <input
@@ -75,7 +105,9 @@ export default function AuthForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              <button type="submit">Login</button>
+              <button type="submit" disabled={loading}>
+                {loading ? "Logging in..." : "Login"}
+              </button>
               <p>
                 Don't have an account?{" "}
                 <a
@@ -91,6 +123,13 @@ export default function AuthForm() {
             </>
           ) : (
             <>
+              <input
+                type="text"
+                placeholder="Full Name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+              />
               <input
                 type="email"
                 placeholder="Email ID"
@@ -112,12 +151,16 @@ export default function AuthForm() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
               />
-
               {password !== confirmPassword && confirmPassword && (
-                <p style={{ color: "red" }}>Passwords do not match!</p>
+                <p style={{ color: "red", fontSize: "13px" }}>
+                  Passwords do not match!
+                </p>
               )}
-              <button type="submit" disabled={password !== confirmPassword}>
-                Register
+              <button
+                type="submit"
+                disabled={password !== confirmPassword || loading}
+              >
+                {loading ? "Registering..." : "Register"}
               </button>
             </>
           )}
