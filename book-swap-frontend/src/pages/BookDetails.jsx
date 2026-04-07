@@ -10,6 +10,7 @@ export default function BookDetails() {
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   const token = localStorage.getItem("token");
 
@@ -43,6 +44,14 @@ export default function BookDetails() {
       if (response.ok) {
         const data = await response.json();
         setBook(data);
+        const profileRes = await fetch(
+          "http://localhost:8000/api/auth/profile/",
+          {
+            headers: { Authorization: `Token ${token}` },
+          },
+        );
+        const profileData = await profileRes.json();
+        setCurrentUserId(profileData.id);
       } else {
         setError("Book not found.");
       }
@@ -119,12 +128,26 @@ export default function BookDetails() {
                 <span className="detail-label">Description:</span>
                 <p>{book.description}</p>
               </div>
-              <button
-                className="swap-btn"
-                onClick={() => navigate(`/swap-request/${id}`)}
-              >
-                Request Swap
-              </button>
+              {book.is_available_for_swap && book.owner !== currentUserId ? (
+                <button
+                  className="swap-btn"
+                  onClick={() => navigate(`/swap-request/${id}`)}
+                >
+                  Request Swap
+                </button>
+              ) : book.owner === currentUserId ? (
+                <p
+                  style={{ color: "#888", fontSize: "14px", marginTop: "10px" }}
+                >
+                  This is your book.
+                </p>
+              ) : (
+                <p
+                  style={{ color: "#888", fontSize: "14px", marginTop: "10px" }}
+                >
+                  This book is no longer available for swap.
+                </p>
+              )}
             </div>
           </div>
         </div>

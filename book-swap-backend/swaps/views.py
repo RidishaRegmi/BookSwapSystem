@@ -20,10 +20,10 @@ def create_swap_request(request):
             message=f'{request.user.full_name or request.user.username} sent you a swap request for your book "{swap.requested_book.title}".',
         )
         Notification.objects.create(
-    user=request.user,
-    message=f'Your swap request for "{swap.requested_book.title}" by {swap.requested_book.owner.full_name or swap.requested_book.owner.username} has been sent successfully.',
-)
-        return Response(SwapRequestSerializer(swap).data, status=status.HTTP_201_CREATED)
+            user=request.user,
+            message=f'Your swap request for "{swap.requested_book.title}" by {swap.requested_book.owner.full_name or swap.requested_book.owner.username} has been sent successfully.',
+        )
+        return Response(SwapRequestSerializer(swap, context={'request': request}).data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -33,7 +33,7 @@ def incoming_requests(request):
     swaps = SwapRequest.objects.filter(
         requested_book__owner=request.user
     ).select_related('requester', 'requested_book', 'offered_book')
-    serializer = SwapRequestSerializer(swaps, many=True)
+    serializer = SwapRequestSerializer(swaps, many=True, context={'request': request})
     return Response(serializer.data)
 
 
@@ -43,7 +43,7 @@ def sent_requests(request):
     swaps = SwapRequest.objects.filter(
         requester=request.user
     ).select_related('requester', 'requested_book', 'offered_book')
-    serializer = SwapRequestSerializer(swaps, many=True)
+    serializer = SwapRequestSerializer(swaps, many=True, context={'request': request})
     return Response(serializer.data)
 
 
@@ -62,7 +62,7 @@ def accept_request(request, pk):
         user=swap.requester,
         message=f'Your swap request for "{swap.requested_book.title}" has been accepted by {owner_name}.',
     )
-    return Response(SwapRequestSerializer(swap).data)
+    return Response(SwapRequestSerializer(swap, context={'request': request}).data)
 
 
 @api_view(['PUT'])
@@ -80,7 +80,7 @@ def reject_request(request, pk):
         user=swap.requester,
         message=f'{owner_name} rejected your swap request for "{swap.requested_book.title}".',
     )
-    return Response(SwapRequestSerializer(swap).data)
+    return Response(SwapRequestSerializer(swap, context={'request': request}).data)
 
 
 @api_view(['PUT'])
@@ -105,4 +105,28 @@ def complete_request(request, pk):
         user=swap.requested_book.owner,
         message=f'Your swap for "{swap.offered_book.title}" has been marked as completed.',
     )
-    return Response(SwapRequestSerializer(swap).data)
+    return Response(SwapRequestSerializer(swap, context={'request': request}).data)
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def save_meetup_note(request, pk):
+    swap = get_object_or_404(SwapRequest, pk=pk)
+    if request.user != swap.requester and request.user != swap.requested_book.owner:
+        return Response({'detail': 'Only participants can add a meetup note.'}, status=status.HTTP_403_FORBIDDEN)
+    if swap.status != 'Accepted':
+        return Response({'detail': 'Meetup note can only be added to accepted swaps.'}, status=status.HTTP_400_BAD_REQUEST)
+    swap.meetup_note = request.data.get('meetup_note', '')
+    swap.save()
+
+    if request.user == swap.requester:
+        other_user = swap.requested_book.owner
+    else:
+        other_user = swap.requester
+
+    sender_name = request.user.full_name or request.user.username
+    Notification.objects.create(
+        user=other_user,
+        message=f'{sender_name} left a meetup note: "{swap.meetup_note}"',
+    )
+    return Response(SwapRequestSerializer(swap, context={'request': request}).data)

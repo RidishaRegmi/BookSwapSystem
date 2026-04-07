@@ -16,20 +16,48 @@ export default function AuthForm() {
   const [location, setLocation] = useState("");
   const [locationLoading, setLocationLoading] = useState(false);
   const navigate = useNavigate();
+  const [city, setCity] = useState("");
+  const [lat, setLat] = useState(null);
+  const [lng, setLng] = useState(null);
+  const [locLoading, setLocLoading] = useState(false);
+  const [locError, setLocError] = useState("");
 
   const detectLocation = () => {
     setLocationLoading(true);
+    setLocError(""); // Clear previous errors
+
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported by your browser.");
+      setLocationLoading(false);
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        const { latitude, longitude } = position.coords;
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-        );
-        const data = await res.json();
-        const city =
-          data.address.city || data.address.town || data.address.village || "";
-        setLocation(city);
-        setLocationLoading(false);
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+
+        //  Save coordinates to state
+        setLat(latitude);
+        setLng(longitude);
+
+        // Convert coordinates to city name
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+          );
+          const data = await res.json();
+          const cityName =
+            data.address?.city ||
+            data.address?.town ||
+            data.address?.village ||
+            "Your Area";
+          setLocation(cityName); // Keep using your existing `location` state
+        } catch {
+          setLocation("Detected Location");
+        } finally {
+          setLocationLoading(false);
+        }
       },
       () => {
         setError("Could not detect location. Please type manually.");
@@ -70,7 +98,9 @@ export default function AuthForm() {
             email,
             password,
             full_name: fullName,
-            location,
+            city: location,
+            lat,
+            lng,
           }),
         });
 

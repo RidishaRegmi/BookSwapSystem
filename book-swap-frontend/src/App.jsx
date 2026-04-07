@@ -10,6 +10,7 @@ import SwapManagement from "./pages/SwapManagement.jsx";
 import Notifications from "./pages/Notifications.jsx";
 import Profile from "./pages/Profile.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
+import MapPage from "./pages/MapPage";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/map" element={<MapPage />} />
       </Routes>
     </Router>
   );

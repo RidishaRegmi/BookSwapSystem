@@ -14,6 +14,7 @@ class SwapRequest(models.Model):
     offered_book = models.ForeignKey('books.Book', on_delete=models.CASCADE, related_name='swap_requests_offered')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     message = models.TextField(blank=True)
+    meetup_note = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -65,20 +65,33 @@ export default function HomePage() {
       {/* About */}
       <section className="about-section" id="about">
         <div className="about-left">
-          <h2>About Book Swap System</h2>
+          <h2>About Us</h2>
           <p>
             Book Swap System is a free online platform designed to connect book
             lovers who want to exchange books instead of buying new ones.
-          </p>
-          <p>
-            Whether you have academic textbooks, fiction novels, self-help books
-            or reference materials you no longer need — someone else might be
-            looking for exactly that.
+            Whether you have academic textbooks, fiction novels, self-help
+            books, or reference materials you no longer need — someone else
+            might be looking for exactly that. Our platform makes it simple,
+            fast, and completely free to give your books a second life while
+            discovering your next great read.
           </p>
           <p>
             Our platform makes it easy to list your books, browse what others
-            have, send swap requests and complete exchanges — all in one place.
-            No money involved, just books changing hands between readers.
+            have, send swap requests, and complete exchanges — all in one place.
+            No money involved, just books changing hands between readers. Simply
+            create an account, upload the books you wish to swap, and browse
+            listings from fellow readers. When you find a book you want, send a
+            swap request and connect directly with the owner to arrange the
+            exchange.
+          </p>
+          <p>
+            Books deserve to be read, not forgotten on a shelf. Book Swap System
+            was built with the belief that knowledge and stories should be
+            accessible to everyone, regardless of budget. By swapping instead of
+            buying, you save money, reduce waste, and become part of a growing
+            community of readers who believe in the power of sharing. Every swap
+            is a small step toward a more connected, sustainable, and well-read
+            world.
           </p>
         </div>
 

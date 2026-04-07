@@ -36,14 +36,17 @@ class SwapRequestSerializer(serializers.ModelSerializer):
     requester_name = serializers.SerializerMethodField()
     requested_book_title = serializers.SerializerMethodField()
     offered_book_title = serializers.SerializerMethodField()
+    requested_book_image = serializers.SerializerMethodField()
+    offered_book_image = serializers.SerializerMethodField()
     recipient_name = serializers.SerializerMethodField()
 
     class Meta:
         model = SwapRequest
         fields = (
             'id', 'requester', 'requester_name', 'requested_book',
-            'requested_book_title', 'offered_book', 'offered_book_title',
-            'recipient_name', 'status', 'message', 'created_at', 'updated_at',
+            'requested_book_title', 'requested_book_image', 'offered_book',
+            'offered_book_title', 'offered_book_image', 'recipient_name',
+            'status', 'message', 'meetup_note', 'created_at', 'updated_at',
         )
 
     def get_requester_name(self, obj):
@@ -54,6 +57,22 @@ class SwapRequestSerializer(serializers.ModelSerializer):
 
     def get_offered_book_title(self, obj):
         return obj.offered_book.title
+
+    def get_requested_book_image(self, obj):
+        request = self.context.get('request')
+        if obj.requested_book.image:
+            if request:
+                return request.build_absolute_uri(obj.requested_book.image.url)
+            return obj.requested_book.image.url
+        return None
+
+    def get_offered_book_image(self, obj):
+        request = self.context.get('request')
+        if obj.offered_book.image:
+            if request:
+                return request.build_absolute_uri(obj.offered_book.image.url)
+            return obj.offered_book.image.url
+        return None
 
     def get_recipient_name(self, obj):
         return obj.requested_book.owner.full_name or obj.requested_book.owner.username

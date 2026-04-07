@@ -280,6 +280,8 @@ html, body, #root {
 .about-divider {
   border: none;
   border-top: 1px solid #e8ddd9;
+  width: 90%;
+  margin: 0 auto;
 }
 
 /* ── WHAT WE STAND FOR ── */

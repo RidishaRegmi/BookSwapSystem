@@ -71,7 +71,7 @@ export default function BrowseBooks() {
   };
 
   return (
-    <div>
+    <div className="browse-page">
       <AppNav onLogout={handleLogout} />
       <AppSidebar />
       <main className="page-main">

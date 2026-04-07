@@ -68,6 +68,9 @@ export default function AppSidebar({ onLogout }) {
           <button onClick={() => navigate("/swap-management")}>
             Swap Requests
           </button>
+          <button className="nav-btn" onClick={() => navigate("/map")}>
+            Map
+          </button>
         </nav>
         <button className="logout-btn" onClick={onLogout}>
           Logout

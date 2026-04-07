@@ -166,3 +166,34 @@
   background: #cce5ff;
   color: #004085;
 }
+.meetup-note-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.meetup-input {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 13px;
+  font-family: "Poppins", sans-serif;
+  resize: none;
+  width: 100%;
+}
+
+.meetup-input:focus {
+  outline: none;
+  border: 2px solid #603226;
+}
+
+.existing-note {
+  font-size: 13px;
+  color: #603226;
+  font-weight: 500;
+  background: #fdf8f7;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border-left: 3px solid #603226;
+}

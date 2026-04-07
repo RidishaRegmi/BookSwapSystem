@@ -61,7 +61,7 @@ def profile_view(request):
     if request.method == 'GET':
         serializer = UserProfileSerializer(request.user)
         return Response(serializer.data)
-    serializer = UserProfileSerializer(request.user, data=request.data, partial=True)
+    serializer = UserProfileSerializer(request.user, data=request.data, partial=True, context={'request': request})
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data)
@@ -111,3 +111,39 @@ def admin_remove_book(request, pk):
     book = get_object_or_404(Book, pk=pk)
     book.delete()
     return Response({'message': 'Book removed successfully'}, status=status.HTTP_200_OK)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def upload_profile_image(request):
+    user = request.user
+    if 'profile_image' not in request.FILES:
+        return Response({'detail': 'No image provided.'}, status=status.HTTP_400_BAD_REQUEST)
+    user.profile_image = request.FILES['profile_image']
+    user.save()
+    serializer = UserProfileSerializer(user, context={'request': request})
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_locations(request):
+    """
+    Returns list of users with location coordinates for the map.
+    Only includes users who have successfully saved lat/lng.
+    """
+    users = User.objects.filter(
+        lat__isnull=False,
+        lng__isnull=False
+    ).values('id', 'full_name', 'email', 'city', 'lat', 'lng')
+
+    result = [
+        {
+            "id": u['id'],
+            "name": u['full_name'] or u['email'].split('@')[0],
+            "city": u['city'] or "Nepal",
+            "lat": float(u['lat']),
+            "lng": float(u['lng']),
+        }
+        for u in users
+    ]
+
+    return Response(result)

@@ -79,7 +79,10 @@ export default function AddBook() {
       <AppNav onLogout={handleLogout} />
       <AppSidebar />
       <main className="page-main">
-        <h1 className="page-title">Add a New Book</h1>
+        <div className="page-header">
+          <h1 className="page-title">Add a New Book</h1>
+        </div>
+
         <div className="addbook-card">
           {error && (
             <p style={{ color: "red", marginBottom: "12px" }}>{error}</p>

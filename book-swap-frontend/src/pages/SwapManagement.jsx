@@ -9,6 +9,7 @@ export default function SwapManagement() {
   const [incomingRequests, setIncomingRequests] = useState([]);
   const [sentRequests, setSentRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [meetupNotes, setMeetupNotes] = useState({});
   const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
@@ -112,6 +113,28 @@ export default function SwapManagement() {
     }
   };
 
+  const handleSaveMeetupNote = async (id) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8000/api/swaps/${id}/meetup-note/`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Token ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ meetup_note: meetupNotes[id] || "" }),
+        },
+      );
+      if (response.ok) {
+        alert("Meetup note saved!");
+        fetchSwaps();
+      }
+    } catch (error) {
+      console.error("Error saving meetup note:", error);
+    }
+  };
+
   if (loading)
     return (
       <div>
@@ -154,13 +177,14 @@ export default function SwapManagement() {
                   <th>Offered Book</th>
                   <th>Requester</th>
                   <th>Status</th>
+                  <th>Meetup Note</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {incomingRequests.length === 0 ? (
                   <tr>
-                    <td colSpan="5">No incoming requests.</td>
+                    <td colSpan="6">No incoming requests.</td>
                   </tr>
                 ) : (
                   incomingRequests.map((req) => (
@@ -174,6 +198,33 @@ export default function SwapManagement() {
                         >
                           {req.status}
                         </span>
+                      </td>
+                      <td>
+                        {req.meetup_note ? (
+                          <p className="existing-note">📝 {req.meetup_note}</p>
+                        ) : null}
+                        {req.status === "Accepted" && (
+                          <div className="meetup-note-cell">
+                            <textarea
+                              className="meetup-input"
+                              placeholder="Add meetup note..."
+                              value={meetupNotes[req.id] || ""}
+                              onChange={(e) =>
+                                setMeetupNotes({
+                                  ...meetupNotes,
+                                  [req.id]: e.target.value,
+                                })
+                              }
+                              rows="2"
+                            />
+                            <button
+                              className="action-btn complete"
+                              onClick={() => handleSaveMeetupNote(req.id)}
+                            >
+                              Save Note
+                            </button>
+                          </div>
+                        )}
                       </td>
                       <td className="action-cell">
                         {req.status === "Pending" && (
@@ -214,12 +265,13 @@ export default function SwapManagement() {
                   <th>Offered Book</th>
                   <th>Recipient</th>
                   <th>Status</th>
+                  <th>Meetup Note</th>
                 </tr>
               </thead>
               <tbody>
                 {sentRequests.length === 0 ? (
                   <tr>
-                    <td colSpan="4">No sent requests.</td>
+                    <td colSpan="5">No sent requests.</td>
                   </tr>
                 ) : (
                   sentRequests.map((req) => (
@@ -233,6 +285,33 @@ export default function SwapManagement() {
                         >
                           {req.status}
                         </span>
+                      </td>
+                      <td>
+                        {req.meetup_note ? (
+                          <p className="existing-note">📝 {req.meetup_note}</p>
+                        ) : null}
+                        {req.status === "Accepted" && (
+                          <div className="meetup-note-cell">
+                            <textarea
+                              className="meetup-input"
+                              placeholder="Add meetup note..."
+                              value={meetupNotes[req.id] || ""}
+                              onChange={(e) =>
+                                setMeetupNotes({
+                                  ...meetupNotes,
+                                  [req.id]: e.target.value,
+                                })
+                              }
+                              rows="2"
+                            />
+                            <button
+                              className="action-btn complete"
+                              onClick={() => handleSaveMeetupNote(req.id)}
+                            >
+                              Save Note
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))

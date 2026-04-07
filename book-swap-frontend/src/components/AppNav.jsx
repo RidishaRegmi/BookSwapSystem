@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/bookswaplogo.jpg";
 
-export default function AppNav({ onLogout }) {
+export default function AppNav({ onLogout, unreadCount = 0 }) {
   const navigate = useNavigate();
 
   return (
@@ -36,20 +36,26 @@ export default function AppNav({ onLogout }) {
           gap: 8px;
         }
         .app-nav .nav-right button {
-          background: transparent;
-          border: none;
-          font-size: 16px;
-          font-family: "Poppins", sans-serif;
-          color: #444;
-          cursor: pointer;
-          padding: 8px 20px;
-          border-radius: 8px;
-          transition: all 0.2s ease;
-        }
-        .app-nav .nav-right button:hover {
-          background: #f5f0ee;
-          color: #603226;
-        }
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  font-family: "Poppins", sans-serif;
+  color: #444;
+  cursor: pointer;
+  padding: 8px 20px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+.app-nav .nav-notif {
+  border: 1.5px solid #603226 !important;
+  color: #603226 !important;
+  background: #fdf8f7 !important;
+  border-radius: 20px !important;
+}
+.app-nav .nav-notif:hover {
+  background: #f5f0ee !important;
+  border-color: #603226 !important;
+}
         .app-nav .nav-logout {
           background: #603226 !important;
           color: white !important;
@@ -72,8 +78,34 @@ export default function AppNav({ onLogout }) {
         </div>
         <div className="nav-right">
           <button onClick={() => navigate("/profile")}>Profile</button>
-          <button onClick={() => navigate("/notifications")}>
+          <button
+            className="nav-notif"
+            onClick={() => navigate("/notifications")}
+            style={{ position: "relative" }}
+          >
             Notifications
+            {unreadCount > 0 && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: "-6px",
+                  right: "-8px",
+                  background: "#603226",
+                  color: "white",
+                  borderRadius: "50%",
+                  width: "22px",
+                  height: "22px",
+                  fontSize: "12px",
+                  fontWeight: "700",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "2px solid white",
+                }}
+              >
+                {unreadCount}
+              </span>
+            )}
           </button>
           <button className="nav-logout" onClick={onLogout}>
             Logout

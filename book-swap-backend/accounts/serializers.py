@@ -7,10 +7,17 @@ class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     full_name = serializers.CharField(required=False, allow_blank=True)
     location = serializers.CharField(required=False, allow_blank=True)
+    
 
-    class Meta:
-        model = User
-        fields = ('email', 'password', 'full_name', 'location')
+class Meta:
+    model = User
+    fields = ('email', 'password', 'full_name', 'location', 'city', 'lat', 'lng')
+    extra_kwargs = {
+        'lat': {'required': False, 'allow_null': True},
+        'lng': {'required': False, 'allow_null': True},
+    }
+
+   
 
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
@@ -23,7 +30,10 @@ class RegisterSerializer(serializers.ModelSerializer):
             email=validated_data['email'],
             password=validated_data['password'],
             full_name=validated_data.get('full_name', ''),
+            city=validated_data.get('city', ''),
             location=validated_data.get('location', ''),
+            lat=validated_data.get('lat'),
+            lng=validated_data.get('lng'),
         )
         return user
 
@@ -48,7 +58,7 @@ class LoginSerializer(serializers.Serializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'full_name', 'is_admin', 'location', 'created_at')
+        fields = ('id', 'username', 'email', 'full_name', 'is_admin', 'location', 'created_at', 'profile_image')
         read_only_fields = ('id', 'email', 'created_at', 'is_admin')
 
 

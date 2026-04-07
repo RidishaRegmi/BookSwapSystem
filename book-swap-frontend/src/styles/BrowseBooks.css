@@ -1,156 +1,210 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
 
-.browse-filters {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.page-main {
+/* =========================
+   PAGE CONTAINER
+========================= */
+.browse-page .page-main {
   margin-left: 240px;
   margin-top: 70px;
   padding: 40px;
-  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 28px;
+
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
 }
 
-.search-input {
-  flex: 1;
-  min-width: 200px;
+/* =========================
+   PAGE TITLE
+========================= */
+.browse-page .page-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #3e2723;
+}
+
+/* =========================
+   FILTER SECTION
+========================= */
+.browse-page .browse-filters {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+
+  background: rgba(255, 255, 255, 0.75);
+  padding: 16px;
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+}
+
+/* Filter group */
+.browse-page .filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.browse-page .filter-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #603226;
+}
+
+/* =========================
+   INPUTS & SELECTS
+========================= */
+.browse-page .search-input,
+.browse-page .browse-filters select,
+.browse-page .location-filter {
   padding: 12px 16px;
-  border-radius: 12px;
-  border: 1px solid #ddd;
+  border-radius: 10px;
+  border: none;
   font-size: 14px;
-  font-family: "Poppins", sans-serif;
-  background: #fff;
+  background: #ffffff;
   color: #333;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  transition: all 0.2s ease;
 }
 
-.search-input:focus {
+.browse-page .search-input:focus,
+.browse-page .browse-filters select:focus,
+.browse-page .location-filter:focus {
   outline: none;
-  border: 2px solid #603226;
+  box-shadow: 0 0 0 2px #603226;
 }
 
-.browse-filters select {
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: 1px solid #ddd;
-  font-size: 14px;
-  font-family: "Poppins", sans-serif;
-  background: #fff;
-  color: #333;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+/* =========================
+   RESULTS COUNT
+========================= */
+.browse-page .results-count {
+  font-size: 13px;
+  color: #6d6d6d;
 }
 
-.browse-filters select:focus {
-  outline: none;
-  border: 2px solid #603226;
-}
-
-.results-count {
-  font-size: 14px;
-  color: #888;
-  font-weight: 500;
-}
-
-/* Books Grid */
-.books-grid {
+/* =========================
+   BOOK GRID
+========================= */
+.browse-page .books-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 24px;
 }
 
-.book-card {
-  background: #ffffff;
-  border-radius: 18px;
-  padding: 20px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+/* =========================
+   BOOK CARD
+========================= */
+.browse-page .book-card {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+  backdrop-filter: blur(10px);
+
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.25s ease;
 }
 
-.book-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+.browse-page .book-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.15);
 }
 
-.book-image-placeholder {
+/* =========================
+   BOOK IMAGE
+========================= */
+.browse-page .book-image-placeholder {
   background: #f5f0ee;
-  border-radius: 12px;
-  height: 140px;
+  border-radius: 14px;
+  height: 160px;
+  overflow: hidden;
+
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 48px;
 }
 
-.book-info {
+.browse-page .book-image-placeholder img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* =========================
+   BOOK INFO
+========================= */
+.browse-page .book-info {
   display: flex;
   flex-direction: column;
   gap: 6px;
   flex: 1;
 }
 
-.book-info h3 {
+.browse-page .book-info h3 {
   font-size: 15px;
   font-weight: 600;
   color: #333;
   line-height: 1.3;
 }
 
-.book-author {
+.browse-page .book-author {
   font-size: 13px;
   color: #888;
 }
 
-.book-tags {
+/* =========================
+   TAGS
+========================= */
+.browse-page .book-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 4px;
 }
 
-.tag {
-  padding: 3px 10px;
-  background: #f5f0ee;
+.browse-page .tag {
+  padding: 4px 12px;
+  background: #f1e5df;
   border-radius: 20px;
   font-size: 11px;
   color: #603226;
   font-weight: 500;
 }
 
-.location-tag {
+.browse-page .location-tag {
   background: #e8f4fd;
   color: #1a6fa8;
 }
 
-.view-btn {
+/* =========================
+   BUTTON
+========================= */
+.browse-page .view-btn {
   width: 100%;
   padding: 10px;
   background: #603226;
   color: white;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   font-size: 14px;
-  font-family: "Poppins", sans-serif;
   font-weight: 500;
   cursor: pointer;
-  transition: filter 0.2s ease;
+  transition: all 0.2s ease;
 }
 
-.view-btn:hover {
-  filter: brightness(1.15);
+.browse-page .view-btn:hover {
+  background: #7a4334;
 }
 
-/* No Results */
-.no-results {
+/* =========================
+   NO RESULTS
+========================= */
+.browse-page .no-results {
   text-align: center;
   padding: 60px 20px;
   color: #888;
@@ -158,55 +212,4 @@
   background: #fff;
   border-radius: 18px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.07);
-}
-
-.about-section {
-  padding: 80px 60px;
-  background: white;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-}
-
-.about-section h2 {
-  font-size: 32px;
-  font-weight: 700;
-  color: #603226;
-}
-
-.about-section p {
-  font-size: 16px;
-  color: #666;
-  line-height: 1.8;
-  max-width: 700px;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.filter-group label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #603226;
-}
-
-.location-filter {
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: 1px solid #ddd;
-  font-size: 14px;
-  font-family: "Poppins", sans-serif;
-  background: #fff;
-  color: #333;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-}
-
-.location-filter:focus {
-  outline: none;
-  border: 2px solid #603226;
 }
