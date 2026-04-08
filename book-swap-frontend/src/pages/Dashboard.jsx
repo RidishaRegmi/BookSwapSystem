@@ -66,24 +66,22 @@ export default function Dashboard() {
       const booksData = await booksRes.json();
       setMyBooks(booksData || []);
 
-      const incomingRes = await fetch(
-        "http://localhost:8000/api/swaps/incoming/",
-        { headers: { Authorization: `Token ${token}` } },
+      const historyRes = await fetch(
+        "http://localhost:8000/api/swaps/history/",
+        {
+          headers: { Authorization: `Token ${token}` },
+        },
       );
-      const incomingData = await incomingRes.json();
+      const allSwaps = await historyRes.json();
 
-      const sentRes = await fetch("http://localhost:8000/api/swaps/sent/", {
-        headers: { Authorization: `Token ${token}` },
-      });
-      const sentData = await sentRes.json();
-
-      const allSwaps = [...(incomingData || []), ...(sentData || [])];
       setActiveSwaps(
-        allSwaps.filter(
+        (allSwaps || []).filter(
           (s) => s.status === "Pending" || s.status === "Accepted",
         ),
       );
-      setCompletedSwaps(allSwaps.filter((s) => s.status === "Completed"));
+      setCompletedSwaps(
+        (allSwaps || []).filter((s) => s.status === "Completed"),
+      );
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     }

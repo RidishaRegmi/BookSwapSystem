@@ -3,9 +3,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
 
-from .models import SwapRequest
-from .serializers import SwapRequestCreateSerializer, SwapRequestSerializer
+from .models import SwapRequest, SwapMessage
+from .serializers import SwapRequestCreateSerializer, SwapRequestSerializer, SwapMessageSerializer
 from notifications.models import Notification
 
 
@@ -47,6 +48,23 @@ def sent_requests(request):
     return Response(serializer.data)
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def my_swap_history(request):
+    swaps = (
+        SwapRequest.objects.filter(
+            Q(requester=request.user)
+            | Q(requested_book__owner=request.user)
+            | Q(offered_book__owner=request.user)
+        )
+        .select_related('requester', 'requested_book', 'offered_book')
+        .distinct()
+        .order_by('-updated_at')
+    )
+    serializer = SwapRequestSerializer(swaps, many=True, context={'request': request})
+    return Response(serializer.data)
+
+
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def accept_request(request, pk):
@@ -56,6 +74,8 @@ def accept_request(request, pk):
     if swap.status != 'Pending':
         return Response({'detail': 'This request is no longer pending.'}, status=status.HTTP_400_BAD_REQUEST)
     swap.status = 'Accepted'
+    swap.requester_marked_completed = False
+    swap.owner_marked_completed = False
     swap.save()
     owner_name = request.user.full_name or request.user.username
     Notification.objects.create(
@@ -89,21 +109,79 @@ def complete_request(request, pk):
     swap = get_object_or_404(SwapRequest, pk=pk)
     if request.user != swap.requester and request.user != swap.requested_book.owner:
         return Response({'detail': 'Only participants can mark this as completed.'}, status=status.HTTP_403_FORBIDDEN)
-    if swap.status != 'Accepted':
-        return Response({'detail': 'Only accepted requests can be completed.'}, status=status.HTTP_400_BAD_REQUEST)
+    if swap.status not in ('Accepted', 'Completed'):
+     return Response({'detail': 'Chat is not available for this swap.'}, status=status.HTTP_400_BAD_REQUEST)
+    if request.method == 'POST' and swap.status != 'Accepted':
+     return Response({'detail': 'Cannot send messages in a completed swap.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if request.user == swap.requester:
+        if swap.requester_marked_completed:
+            return Response({'detail': 'You already marked this swap as completed.'}, status=status.HTTP_400_BAD_REQUEST)
+        swap.requester_marked_completed = True
+        other_user = swap.requested_book.owner
+    else:
+        if swap.owner_marked_completed:
+            return Response({'detail': 'You already marked this swap as completed.'}, status=status.HTTP_400_BAD_REQUEST)
+        swap.owner_marked_completed = True
+        other_user = swap.requester
+
+    if not (swap.requester_marked_completed and swap.owner_marked_completed):
+        swap.save(update_fields=['requester_marked_completed', 'owner_marked_completed', 'updated_at'])
+        marker_name = request.user.full_name or request.user.username
+        Notification.objects.create(
+            user=other_user,
+            message=f'{marker_name} marked the swap as completed. Please confirm to finish the transaction.',
+        )
+        return Response(SwapRequestSerializer(swap, context={'request': request}).data)
+
+    # Both parties confirmed completion: transfer ownership and finalize.
+    requested_book_old_owner = swap.requested_book.owner
+    offered_book_old_owner = swap.offered_book.owner
+
+    swap.requested_book.owner = offered_book_old_owner
+    swap.offered_book.owner = requested_book_old_owner
+
     swap.status = 'Completed'
     swap.save()
-    swap.requested_book.is_available_for_swap = False
+    # After ownership transfer, both books remain swappable for future swaps.
+    swap.requested_book.is_available_for_swap = True
     swap.requested_book.save()
-    swap.offered_book.is_available_for_swap = False
+    swap.offered_book.is_available_for_swap = True
     swap.offered_book.save()
     Notification.objects.create(
         user=swap.requester,
-        message=f'Your swap for "{swap.requested_book.title}" has been marked as completed.',
+        message=f'Your swap for "{swap.requested_book.title}" is fully completed.',
     )
     Notification.objects.create(
         user=swap.requested_book.owner,
-        message=f'Your swap for "{swap.offered_book.title}" has been marked as completed.',
+        message=f'Your swap for "{swap.offered_book.title}" is fully completed.',
+    )
+    return Response(SwapRequestSerializer(swap, context={'request': request}).data)
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def cancel_request(request, pk):
+    swap = get_object_or_404(SwapRequest, pk=pk)
+    if request.user != swap.requester and request.user != swap.requested_book.owner:
+        return Response({'detail': 'Only participants can cancel this swap.'}, status=status.HTTP_403_FORBIDDEN)
+    if swap.status != 'Accepted':
+        return Response({'detail': 'Only accepted swaps can be cancelled.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    swap.status = 'Cancelled'
+    swap.requester_marked_completed = False
+    swap.owner_marked_completed = False
+    swap.save(update_fields=['status', 'requester_marked_completed', 'owner_marked_completed', 'updated_at'])
+
+    other_user = swap.requested_book.owner if request.user == swap.requester else swap.requester
+    canceller_name = request.user.full_name or request.user.username
+    Notification.objects.create(
+        user=other_user,
+        message=f'{canceller_name} cancelled the active swap for "{swap.requested_book.title}".',
+    )
+    Notification.objects.create(
+        user=request.user,
+        message=f'You cancelled the active swap for "{swap.requested_book.title}".',
     )
     return Response(SwapRequestSerializer(swap, context={'request': request}).data)
 
@@ -130,3 +208,40 @@ def save_meetup_note(request, pk):
         message=f'{sender_name} left a meetup note: "{swap.meetup_note}"',
     )
     return Response(SwapRequestSerializer(swap, context={'request': request}).data)
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def swap_messages(request, pk):
+    swap = get_object_or_404(SwapRequest, pk=pk)
+    if request.user != swap.requester and request.user != swap.requested_book.owner:
+        return Response({'detail': 'Only participants can access chat.'}, status=status.HTTP_403_FORBIDDEN)
+    if swap.status != 'Accepted':
+        return Response({'detail': 'Chat is available only for active (accepted) swaps.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if request.method == 'GET':
+        messages = swap.messages.select_related('sender').all()
+        serializer = SwapMessageSerializer(messages, many=True)
+        return Response(serializer.data)
+
+    content = (request.data.get('content') or '').strip()
+    if not content:
+        return Response({'detail': 'Message cannot be empty.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    message = SwapMessage.objects.create(
+        swap=swap,
+        sender=request.user,
+        content=content,
+    )
+
+    if request.user == swap.requester:
+        other_user = swap.requested_book.owner
+    else:
+        other_user = swap.requester
+
+    sender_name = request.user.full_name or request.user.username
+    Notification.objects.create(
+        user=other_user,
+        message=f'{sender_name} sent you a chat message for swap "{swap.requested_book.title}".',
+    )
+    return Response(SwapMessageSerializer(message).data, status=status.HTTP_201_CREATED)

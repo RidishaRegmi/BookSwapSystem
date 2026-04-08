@@ -169,3 +169,29 @@ form p.error {
 .location-btn:hover {
   filter: brightness(1.15) !important;
 }
+
+.location-row-city {
+  align-items: flex-start;
+}
+
+.pin-map-card {
+  margin-top: 6px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid #e5ddd6;
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.pin-map-title {
+  margin: 0 0 8px 0;
+  color: #603226;
+  font-size: 12px;
+  text-align: left;
+}
+
+.auth-pin-map.leaflet-container {
+  width: 100%;
+  height: 25vh !important;
+  border-radius: 10px;
+  overflow: hidden;
+}

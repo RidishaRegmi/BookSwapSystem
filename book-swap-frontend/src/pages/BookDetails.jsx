@@ -11,7 +11,6 @@ export default function BookDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentUserId, setCurrentUserId] = useState(null);
-
   const token = localStorage.getItem("token");
 
   const handleLogout = async () => {
@@ -89,7 +88,10 @@ export default function BookDetails() {
       <AppNav onLogout={handleLogout} />
       <AppSidebar />
       <main className="page-main">
-        <h1 className="page-title">Book Details</h1>
+        <div className="page-header">
+          <h1 className="page-title">Book Details</h1>
+        </div>
+
         <div className="bookdetails-card">
           <div className="bookdetails-content">
             <div className="bookdetails-image">

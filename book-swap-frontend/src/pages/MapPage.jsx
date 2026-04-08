@@ -19,7 +19,9 @@ L.Icon.Default.mergeOptions({
 export default function MapPage() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
   const [users, setUsers] = useState([]);
+  const [userProfiles, setUserProfiles] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -64,6 +66,23 @@ export default function MapPage() {
     navigate("/auth");
   };
 
+  const loadUserProfile = async (userId) => {
+    if (userProfiles[userId]) return;
+    try {
+      const res = await fetch(
+        `http://localhost:8000/api/auth/users/${userId}/map-profile/`,
+        {
+          headers: { Authorization: `Token ${token}` },
+        },
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      setUserProfiles((prev) => ({ ...prev, [userId]: data }));
+    } catch (err) {
+      console.error("Failed to load map user profile:", err);
+    }
+  };
+
   if (loading) {
     return (
       <div>
@@ -85,7 +104,10 @@ export default function MapPage() {
       <AppNav onLogout={handleLogout} />
       <AppSidebar />
       <main className="map-page">
-        <h1 className="page-title">🇳🇵 Fellow Readers in Nepal</h1>
+        <div className="page-header" style={{ marginBottom: "8px" }}>
+          <h1 className="page-title">Fellow Readers</h1>
+        </div>
+
         <p className="map-subtitle">
           {users.length > 0
             ? `${users.length} book swapper${users.length !== 1 ? "s" : ""} near you`
@@ -105,10 +127,55 @@ export default function MapPage() {
             />
             {users.map((user) => (
               <Marker key={user.id} position={[user.lat, user.lng]}>
-                <Popup>
-                  <strong>{user.name}</strong>
-                  <br />
-                  📍 {user.city}
+                <Popup eventHandlers={{ add: () => loadUserProfile(user.id) }}>
+                  <div className="map-user-tooltip">
+                    <div className="map-user-header">
+                      {userProfiles[user.id]?.profile_image ? (
+                        <img
+                          src={userProfiles[user.id].profile_image}
+                          alt={`${user.name} profile`}
+                          className="map-user-avatar"
+                        />
+                      ) : (
+                        <div className="map-user-avatar map-user-avatar-fallback">
+                          {(user.name || "U")[0].toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <strong>
+                          {String(user.id) === String(currentUser.id)
+                            ? "Me"
+                            : user.name}
+                        </strong>
+                        <p>📍 {user.city}</p>
+                      </div>
+                    </div>
+
+                    <p className="map-tooltip-title">Available books</p>
+                    <ul className="map-books-list">
+                      {(userProfiles[user.id]?.available_books || [])
+                        .slice(0, 4)
+                        .map((book) => (
+                          <li key={book.id}>
+                            {book.title} - {book.author}
+                          </li>
+                        ))}
+                      {userProfiles[user.id] &&
+                        userProfiles[user.id].available_books.length === 0 && (
+                          <li>No available books</li>
+                        )}
+                      {!userProfiles[user.id] && <li>Loading books...</li>}
+                    </ul>
+
+                    <div className="map-tooltip-actions">
+                      <button
+                        className="map-action-btn"
+                        onClick={() => navigate(`/users/${user.id}`)}
+                      >
+                        View Profile
+                      </button>
+                    </div>
+                  </div>
                 </Popup>
               </Marker>
             ))}

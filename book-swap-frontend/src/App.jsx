@@ -11,6 +11,8 @@ import Notifications from "./pages/Notifications.jsx";
 import Profile from "./pages/Profile.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import MapPage from "./pages/MapPage";
+import UserPublicProfile from "./pages/UserPublicProfile.jsx";
+import ChatsPage from "./pages/ChatsPage.jsx";
 
 function App() {
   return (
@@ -28,6 +30,8 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/map" element={<MapPage />} />
+        <Route path="/users/:id" element={<UserPublicProfile />} />
+        <Route path="/chats" element={<ChatsPage />} />
       </Routes>
     </Router>
   );

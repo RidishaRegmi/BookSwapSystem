@@ -13,4 +13,5 @@ urlpatterns = [
     path('admin/books/', views.admin_list_books),
     path('admin/books/<int:pk>/', views.admin_remove_book),
     path('users/locations/', views.user_locations, name='user-locations'),
+    path('users/<int:pk>/map-profile/', views.map_user_profile, name='map-user-profile'),
 ]

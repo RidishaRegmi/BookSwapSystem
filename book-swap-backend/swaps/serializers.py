@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import SwapRequest
+from django.db.models import Q
+from .models import SwapRequest, SwapMessage
 
 
 class SwapRequestCreateSerializer(serializers.ModelSerializer):
@@ -20,6 +21,20 @@ class SwapRequestCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("The requested book is not available for swap.")
         if not offered_book.is_available_for_swap:
             raise serializers.ValidationError("Your offered book is not available for swap.")
+
+        requested_book_in_active_swap = SwapRequest.objects.filter(
+            Q(requested_book=requested_book) | Q(offered_book=requested_book),
+            status='Accepted',
+        ).exists()
+        if requested_book_in_active_swap:
+            raise serializers.ValidationError("The requested book is already in an active swap.")
+
+        offered_book_in_active_swap = SwapRequest.objects.filter(
+            Q(requested_book=offered_book) | Q(offered_book=offered_book),
+            status='Accepted',
+        ).exists()
+        if offered_book_in_active_swap:
+            raise serializers.ValidationError("Your offered book is already in an active swap.")
 
         existing = SwapRequest.objects.filter(
             requester=request.user,
@@ -46,7 +61,9 @@ class SwapRequestSerializer(serializers.ModelSerializer):
             'id', 'requester', 'requester_name', 'requested_book',
             'requested_book_title', 'requested_book_image', 'offered_book',
             'offered_book_title', 'offered_book_image', 'recipient_name',
-            'status', 'message', 'meetup_note', 'created_at', 'updated_at',
+            'status', 'message', 'meetup_note',
+            'requester_marked_completed', 'owner_marked_completed',
+            'created_at', 'updated_at',
         )
 
     def get_requester_name(self, obj):
@@ -76,3 +93,15 @@ class SwapRequestSerializer(serializers.ModelSerializer):
 
     def get_recipient_name(self, obj):
         return obj.requested_book.owner.full_name or obj.requested_book.owner.username
+
+
+class SwapMessageSerializer(serializers.ModelSerializer):
+    sender_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SwapMessage
+        fields = ('id', 'swap', 'sender', 'sender_name', 'content', 'created_at')
+        read_only_fields = ('id', 'swap', 'sender', 'sender_name', 'created_at')
+
+    def get_sender_name(self, obj):
+        return obj.sender.full_name or obj.sender.username

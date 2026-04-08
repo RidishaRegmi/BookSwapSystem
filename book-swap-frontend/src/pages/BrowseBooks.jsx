@@ -75,7 +75,9 @@ export default function BrowseBooks() {
       <AppNav onLogout={handleLogout} />
       <AppSidebar />
       <main className="page-main">
-        <h1 className="page-title">Browse Books</h1>
+        <div className="page-header">
+          <h1 className="page-title">Browse Books</h1>
+        </div>
 
         <div className="browse-filters">
           <div className="filter-group">
@@ -122,52 +124,53 @@ export default function BrowseBooks() {
           </div>
         </div>
 
-        <p className="results-count">{books.length} book(s) found</p>
-
-        {loading ? (
-          <p>Loading books...</p>
-        ) : books.length > 0 ? (
-          <div className="books-grid">
-            {books.map((book) => (
-              <div key={book.id} className="book-card">
-                <div className="book-image-placeholder">
-                  {book.image ? (
-                    <img
-                      src={`http://localhost:8000${book.image}`}
-                      alt={book.title}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        borderRadius: "8px",
-                      }}
-                    />
-                  ) : (
-                    <span>📚</span>
-                  )}
-                </div>
-                <div className="book-info">
-                  <h3>{book.title}</h3>
-                  <p className="book-author">{book.author}</p>
-                  <div className="book-tags">
-                    <span className="tag">{book.category}</span>
-                    <span className="tag">{book.condition}</span>
+        <div className="books-section">
+          <p className="results-count">{books.length} book(s) found</p>
+          {loading ? (
+            <p>Loading books...</p>
+          ) : books.length > 0 ? (
+            <div className="books-grid">
+              {books.map((book) => (
+                <div key={book.id} className="book-card">
+                  <div className="book-image-placeholder">
+                    {book.image ? (
+                      <img
+                        src={`http://localhost:8000${book.image}`}
+                        alt={book.title}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          borderRadius: "8px",
+                        }}
+                      />
+                    ) : (
+                      <span>📚</span>
+                    )}
                   </div>
+                  <div className="book-info">
+                    <h3>{book.title}</h3>
+                    <p className="book-author">{book.author}</p>
+                    <div className="book-tags">
+                      <span className="tag">{book.category}</span>
+                      <span className="tag">{book.condition}</span>
+                    </div>
+                  </div>
+                  <button
+                    className="view-btn"
+                    onClick={() => navigate(`/book/${book.id}`)}
+                  >
+                    View Details
+                  </button>
                 </div>
-                <button
-                  className="view-btn"
-                  onClick={() => navigate(`/book/${book.id}`)}
-                >
-                  View Details
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="no-results">
-            <p>No books found. Try adjusting your filters!</p>
-          </div>
-        )}
+              ))}
+            </div>
+          ) : (
+            <div className="no-results">
+              <p>No books found. Try adjusting your filters!</p>
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );

@@ -9,4 +9,7 @@ urlpatterns = [
     path('<int:pk>/reject/', views.reject_request),
     path('<int:pk>/complete/', views.complete_request),
     path('<int:pk>/meetup-note/', views.save_meetup_note),
+    path('history/', views.my_swap_history),
+    path('<int:pk>/messages/', views.swap_messages),
+    path('<int:pk>/cancel/', views.cancel_request),
 ]

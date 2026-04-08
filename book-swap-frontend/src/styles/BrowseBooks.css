@@ -1,8 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
 
-/* =========================
-   PAGE CONTAINER
-========================= */
 .browse-page .page-main {
   margin-left: 240px;
   margin-top: 70px;
@@ -10,37 +7,46 @@
   display: flex;
   flex-direction: column;
   gap: 28px;
+}
 
-  background: rgba(255, 255, 255, 0.65);
+/* TITLE */
+.browse-page .page-header {
+  background: rgba(96, 50, 38, 0.82);
   backdrop-filter: blur(12px);
-  border-radius: 20px;
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 18px;
+  padding: 18px 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  width: fit-content;
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-/* =========================
-   PAGE TITLE
-========================= */
-.browse-page .page-title {
-  font-size: 28px;
+.browse-page .page-header .page-title {
+  font-size: 32px;
   font-weight: 700;
-  color: #3e2723;
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+  margin: 0;
+  line-height: 1.2;
 }
 
-/* =========================
-   FILTER SECTION
-========================= */
+/* FILTER CARD */
 .browse-page .browse-filters {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 22px;
+  padding: 24px 28px;
+  border: 1.5px solid rgba(96, 50, 38, 0.2);
+  box-shadow:
+    0 0 0 3px rgba(96, 50, 38, 0.08),
+    0 8px 32px rgba(96, 50, 38, 0.15);
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
   align-items: flex-end;
-
-  background: rgba(255, 255, 255, 0.75);
-  padding: 16px;
-  border-radius: 16px;
-  backdrop-filter: blur(10px);
 }
 
-/* Filter group */
 .browse-page .filter-group {
   display: flex;
   flex-direction: column;
@@ -53,56 +59,53 @@
   color: #603226;
 }
 
-/* =========================
-   INPUTS & SELECTS
-========================= */
 .browse-page .search-input,
 .browse-page .browse-filters select,
 .browse-page .location-filter {
   padding: 12px 16px;
-  border-radius: 10px;
-  border: none;
+  border-radius: 12px;
+  border: 1px solid rgba(96, 50, 38, 0.2);
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(4px);
   font-size: 14px;
-  background: #ffffff;
-  color: #333;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  color: #2B1A17;
   transition: all 0.2s ease;
+}
+
+.browse-page .search-input::placeholder,
+.browse-page .location-filter::placeholder {
+  color: #9a9a9a;
 }
 
 .browse-page .search-input:focus,
 .browse-page .browse-filters select:focus,
 .browse-page .location-filter:focus {
   outline: none;
-  box-shadow: 0 0 0 2px #603226;
+  border: 1px solid #603226;
+  box-shadow: 0 0 0 3px rgba(96, 50, 38, 0.15);
 }
 
-/* =========================
-   RESULTS COUNT
-========================= */
 .browse-page .results-count {
   font-size: 13px;
   color: #6d6d6d;
+  width: 100%;
+  margin-top: 4px;
 }
 
-/* =========================
-   BOOK GRID
-========================= */
+/* BOOK GRID */
 .browse-page .books-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 24px;
 }
 
-/* =========================
-   BOOK CARD
-========================= */
+/* BOOK CARD */
 .browse-page .book-card {
   background: rgba(255, 255, 255, 0.85);
   border-radius: 20px;
   padding: 16px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
-
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -111,18 +114,14 @@
 
 .browse-page .book-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 12px 28px rgba(0,0,0,0.15);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
 }
 
-/* =========================
-   BOOK IMAGE
-========================= */
 .browse-page .book-image-placeholder {
   background: #f5f0ee;
   border-radius: 14px;
   height: 160px;
   overflow: hidden;
-
   display: flex;
   align-items: center;
   justify-content: center;
@@ -135,9 +134,6 @@
   object-fit: cover;
 }
 
-/* =========================
-   BOOK INFO
-========================= */
 .browse-page .book-info {
   display: flex;
   flex-direction: column;
@@ -157,9 +153,6 @@
   color: #888;
 }
 
-/* =========================
-   TAGS
-========================= */
 .browse-page .book-tags {
   display: flex;
   flex-wrap: wrap;
@@ -181,9 +174,6 @@
   color: #1a6fa8;
 }
 
-/* =========================
-   BUTTON
-========================= */
 .browse-page .view-btn {
   width: 100%;
   padding: 10px;
@@ -201,15 +191,9 @@
   background: #7a4334;
 }
 
-/* =========================
-   NO RESULTS
-========================= */
 .browse-page .no-results {
   text-align: center;
   padding: 60px 20px;
   color: #888;
   font-size: 15px;
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
 }

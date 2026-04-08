@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
 
 from .models import User
 from .serializers import RegisterSerializer, LoginSerializer, UserProfileSerializer, AdminUserSerializer
@@ -147,3 +148,63 @@ def user_locations(request):
     ]
 
     return Response(result)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def map_user_profile(request, pk):
+    from books.models import Book
+    from swaps.models import SwapRequest
+
+    user = get_object_or_404(User, pk=pk)
+    books = Book.objects.filter(owner=user, is_available_for_swap=True)
+    swap_history = SwapRequest.objects.filter(
+        Q(requester=user) | Q(requested_book__owner=user) | Q(offered_book__owner=user)
+    ).select_related('requester', 'requested_book', 'offered_book', 'requested_book__owner').order_by('-created_at')[:20]
+
+    active_swap = SwapRequest.objects.filter(
+        status='Accepted'
+    ).filter(
+        requester=request.user,
+        requested_book__owner=user
+    ).first() or SwapRequest.objects.filter(
+        status='Accepted'
+    ).filter(
+        requester=user,
+        requested_book__owner=request.user
+    ).first()
+
+    profile_image = None
+    if user.profile_image:
+        profile_image = request.build_absolute_uri(user.profile_image.url)
+
+    return Response({
+        'id': user.id,
+        'name': user.full_name or user.email.split('@')[0],
+        'city': user.city or 'Nepal',
+        'profile_image': profile_image,
+        'available_books': [
+            {
+                'id': b.id,
+                'title': b.title,
+                'author': b.author,
+                'condition': b.condition,
+            }
+            for b in books
+        ],
+        'swap_history': [
+            {
+                'id': s.id,
+                'status': s.status,
+                'requested_book_title': s.requested_book.title,
+                'offered_book_title': s.offered_book.title,
+                'counterparty_name': (
+                    (s.requested_book.owner.full_name or s.requested_book.owner.username)
+                    if s.requester == user
+                    else (s.requester.full_name or s.requester.username)
+                ),
+                'created_at': s.created_at,
+            }
+            for s in swap_history
+        ],
+        'active_swap_id': active_swap.id if active_swap else None,
+    })

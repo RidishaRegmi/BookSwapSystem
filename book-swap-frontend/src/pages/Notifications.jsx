@@ -8,7 +8,6 @@ export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
   const token = localStorage.getItem("token");
 
   useEffect(() => {
@@ -87,7 +86,10 @@ export default function Notifications() {
       <AppNav onLogout={handleLogout} />
       <AppSidebar />
       <main className="page-main">
-        <h1 className="page-title">Notifications</h1>
+        <div className="page-header">
+          <h1 className="page-title">Notifications</h1>
+        </div>
+
         <div className="notif-list">
           {notifications.length === 0 ? (
             <p>No notifications yet.</p>

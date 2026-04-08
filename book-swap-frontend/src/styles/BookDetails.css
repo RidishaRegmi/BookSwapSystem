@@ -7,12 +7,6 @@
   font-family: "Poppins", sans-serif;
 }
 
-.page-wrapper {
-  display: flex;
-  min-height: 100vh;
-  background-color: #f5f0ee;
-}
-
 .page-main {
   margin-left: 240px;
   margin-top: 70px;
@@ -23,17 +17,38 @@
   gap: 28px;
 }
 
-.page-title {
-  font-size: 26px;
-  font-weight: 600;
-  color: #333;
+/* TITLE */
+.page-header {
+  background: rgba(96, 50, 38, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 18px;
+  padding: 18px 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  width: fit-content;
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
+.page-header .page-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+  margin: 0;
+  line-height: 1.2;
+}
+
+/* CARD */
 .bookdetails-card {
-  background: #ffffff;
-  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 22px;
   padding: 30px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+  border: 1.5px solid rgba(96, 50, 38, 0.2);
+  box-shadow:
+    0 0 0 3px rgba(96, 50, 38, 0.08),
+    0 8px 32px rgba(96, 50, 38, 0.15);
 }
 
 .bookdetails-content {
@@ -50,7 +65,7 @@
 .image-placeholder {
   width: 200px;
   height: 280px;
-  background: #e8e0dc;
+  background: rgba(96, 50, 38, 0.08);
   border-radius: 12px;
   display: flex;
   align-items: center;

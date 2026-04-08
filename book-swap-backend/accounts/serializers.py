@@ -7,17 +7,14 @@ class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     full_name = serializers.CharField(required=False, allow_blank=True)
     location = serializers.CharField(required=False, allow_blank=True)
-    
 
-class Meta:
-    model = User
-    fields = ('email', 'password', 'full_name', 'location', 'city', 'lat', 'lng')
-    extra_kwargs = {
-        'lat': {'required': False, 'allow_null': True},
-        'lng': {'required': False, 'allow_null': True},
-    }
-
-   
+    class Meta:
+        model = User
+        fields = ('email', 'password', 'full_name', 'location', 'city', 'lat', 'lng')
+        extra_kwargs = {
+            'lat': {'required': False, 'allow_null': True},
+            'lng': {'required': False, 'allow_null': True},
+        }
 
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():

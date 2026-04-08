@@ -55,21 +55,14 @@ export default function Profile() {
 
   const fetchSwapHistory = async () => {
     try {
-      const incomingRes = await fetch(
-        "http://localhost:8000/api/swaps/incoming/",
+      const historyRes = await fetch(
+        "http://localhost:8000/api/swaps/history/",
         {
           headers: { Authorization: `Token ${token}` },
         },
       );
-      const incomingData = await incomingRes.json();
-
-      const sentRes = await fetch("http://localhost:8000/api/swaps/sent/", {
-        headers: { Authorization: `Token ${token}` },
-      });
-      const sentData = await sentRes.json();
-
-      const allSwaps = [...(incomingData || []), ...(sentData || [])];
-      setSwapHistory(allSwaps);
+      const historyData = await historyRes.json();
+      setSwapHistory(historyData || []);
     } catch (error) {
       console.error("Error fetching swap history:", error);
     }
@@ -159,25 +152,28 @@ export default function Profile() {
       <AppNav onLogout={handleLogout} unreadCount={unreadCount} />
       <AppSidebar />
       <main className="page-main">
-        <h1 className="page-title">User Profile</h1>
+        <div className="page-header">
+          <h1 className="page-title">User Profile</h1>
+        </div>
 
         <div className="profile-card">
-          {/* Avatar Section */}
           <div className="profile-avatar-section">
             <div className="avatar-circle">
-              {} imagePreview ? (
-              <img src={imagePreview} alt="preview" className="avatar-img" />
+              {imagePreview ? (
+                <img src={imagePreview} alt="preview" className="avatar-img" />
               ) : user.profile_image ? (
-              <img
-                src={`http://localhost:8000${user.profile_image}`}
-                alt="profile"
-                className="avatar-img"
-              />
+                <img
+                  src={`http://localhost:8000${user.profile_image}`}
+                  alt="profile"
+                  className="avatar-img"
+                />
               ) : (
-              <span className="avatar-placeholder">
-                {user.full_name ? user.full_name.charAt(0).toUpperCase() : "?"}
-              </span>
-              )
+                <span className="avatar-placeholder">
+                  {user.full_name
+                    ? user.full_name.charAt(0).toUpperCase()
+                    : "?"}
+                </span>
+              )}
             </div>
             <div className="avatar-actions">
               <label className="upload-label">

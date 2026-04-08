@@ -11,6 +11,7 @@ export default function Sidebar() {
     { label: "Browse Books", path: "/browse" },
     { label: "Swap Requests", path: "/swap-management" },
     { label: "Notifications", path: "/notifications" },
+    { label: "Chats", path: "/chats" },
   ];
 
   return (

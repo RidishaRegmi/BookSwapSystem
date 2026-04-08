@@ -5,6 +5,7 @@ import AppSidebar from "../components/AppSideBar";
 import "../styles/SwapManagement.css";
 
 export default function SwapManagement() {
+  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
   const [activeTab, setActiveTab] = useState("incoming");
   const [incomingRequests, setIncomingRequests] = useState([]);
   const [sentRequests, setSentRequests] = useState([]);
@@ -104,13 +105,52 @@ export default function SwapManagement() {
           headers: { Authorization: `Token ${token}` },
         },
       );
+      const data = await response.json();
       if (response.ok) {
-        alert("Swap marked as completed!");
+        alert(
+          data.status === "Completed"
+            ? "Swap completed by both parties!"
+            : "Marked completed. Waiting for the other user to confirm.",
+        );
         fetchSwaps();
       }
     } catch (error) {
       console.error("Error completing swap:", error);
     }
+  };
+
+  const handleCancelSwap = async (id) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8000/api/swaps/${id}/cancel/`,
+        {
+          method: "PUT",
+          headers: { Authorization: `Token ${token}` },
+        },
+      );
+      const data = await response.json();
+      if (response.ok) {
+        alert("Active swap cancelled. No books were exchanged.");
+        fetchSwaps();
+      } else alert(data.detail || "Failed to cancel swap.");
+    } catch (error) {
+      console.error("Error cancelling swap:", error);
+    }
+  };
+
+  const getCompletionStatusLabel = (req) => {
+    const isRequester = String(req.requester) === String(currentUser.id);
+    const iMarked = isRequester
+      ? req.requester_marked_completed
+      : req.owner_marked_completed;
+    const otherMarked = isRequester
+      ? req.owner_marked_completed
+      : req.requester_marked_completed;
+    if (req.status === "Completed") return "Completed";
+    if (iMarked && otherMarked) return "Completed";
+    if (iMarked) return "Waiting for other user";
+    if (otherMarked) return "Other user confirmed";
+    return "Not confirmed";
   };
 
   const handleSaveMeetupNote = async (id) => {
@@ -135,6 +175,115 @@ export default function SwapManagement() {
     }
   };
 
+  const renderTable = (requests, isIncoming) => (
+    <table className="swap-table">
+      <thead>
+        <tr>
+          <th>Requested Book</th>
+          <th>Offered Book</th>
+          <th>{isIncoming ? "Requester" : "Recipient"}</th>
+          <th>Status</th>
+          <th>Completion</th>
+          <th>Meetup Note</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {requests.length === 0 ? (
+          <tr>
+            <td colSpan="7">No {isIncoming ? "incoming" : "sent"} requests.</td>
+          </tr>
+        ) : (
+          requests.map((req) => (
+            <tr key={req.id}>
+              <td>{req.requested_book_title}</td>
+              <td>{req.offered_book_title}</td>
+              <td>{isIncoming ? req.requester_name : req.recipient_name}</td>
+              <td>
+                <span className={`status-badge ${req.status.toLowerCase()}`}>
+                  {req.status}
+                </span>
+              </td>
+              <td>{getCompletionStatusLabel(req)}</td>
+              <td>
+                {req.meetup_note && (
+                  <p className="existing-note">📝 {req.meetup_note}</p>
+                )}
+                {req.status === "Accepted" && (
+                  <div className="meetup-note-cell">
+                    <textarea
+                      className="meetup-input"
+                      placeholder="Add meetup note..."
+                      value={meetupNotes[req.id] || ""}
+                      onChange={(e) =>
+                        setMeetupNotes({
+                          ...meetupNotes,
+                          [req.id]: e.target.value,
+                        })
+                      }
+                      rows="2"
+                    />
+                    <button
+                      className="action-btn complete"
+                      onClick={() => handleSaveMeetupNote(req.id)}
+                    >
+                      Save Note
+                    </button>
+                  </div>
+                )}
+              </td>
+              <td className="action-cell">
+                {req.status === "Pending" && isIncoming && (
+                  <>
+                    <button
+                      className="action-btn accept"
+                      onClick={() => handleAccept(req.id)}
+                    >
+                      Accept
+                    </button>
+                    <button
+                      className="action-btn reject"
+                      onClick={() => handleReject(req.id)}
+                    >
+                      Reject
+                    </button>
+                  </>
+                )}
+                {req.status === "Accepted" && (
+                  <>
+                    <button
+                      className="action-btn complete"
+                      disabled={
+                        String(req.requester) === String(currentUser.id)
+                          ? req.requester_marked_completed
+                          : req.owner_marked_completed
+                      }
+                      onClick={() => handleComplete(req.id)}
+                    >
+                      {String(req.requester) === String(currentUser.id)
+                        ? req.requester_marked_completed
+                          ? "Marked by You"
+                          : "Mark Completed"
+                        : req.owner_marked_completed
+                          ? "Marked by You"
+                          : "Mark Completed"}
+                    </button>
+                    <button
+                      className="action-btn reject"
+                      onClick={() => handleCancelSwap(req.id)}
+                    >
+                      Cancel Swap
+                    </button>
+                  </>
+                )}
+              </td>
+            </tr>
+          ))
+        )}
+      </tbody>
+    </table>
+  );
+
   if (loading)
     return (
       <div>
@@ -151,7 +300,9 @@ export default function SwapManagement() {
       <AppNav onLogout={handleLogout} />
       <AppSidebar />
       <main className="page-main">
-        <h1 className="page-title">Swap Management</h1>
+        <div className="page-header">
+          <h1 className="page-title">Swap Management</h1>
+        </div>
 
         <div className="swap-tabs">
           <button
@@ -169,156 +320,9 @@ export default function SwapManagement() {
         </div>
 
         <div className="swap-card">
-          {activeTab === "incoming" ? (
-            <table className="swap-table">
-              <thead>
-                <tr>
-                  <th>Requested Book</th>
-                  <th>Offered Book</th>
-                  <th>Requester</th>
-                  <th>Status</th>
-                  <th>Meetup Note</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {incomingRequests.length === 0 ? (
-                  <tr>
-                    <td colSpan="6">No incoming requests.</td>
-                  </tr>
-                ) : (
-                  incomingRequests.map((req) => (
-                    <tr key={req.id}>
-                      <td>{req.requested_book_title}</td>
-                      <td>{req.offered_book_title}</td>
-                      <td>{req.requester_name}</td>
-                      <td>
-                        <span
-                          className={`status-badge ${req.status.toLowerCase()}`}
-                        >
-                          {req.status}
-                        </span>
-                      </td>
-                      <td>
-                        {req.meetup_note ? (
-                          <p className="existing-note">📝 {req.meetup_note}</p>
-                        ) : null}
-                        {req.status === "Accepted" && (
-                          <div className="meetup-note-cell">
-                            <textarea
-                              className="meetup-input"
-                              placeholder="Add meetup note..."
-                              value={meetupNotes[req.id] || ""}
-                              onChange={(e) =>
-                                setMeetupNotes({
-                                  ...meetupNotes,
-                                  [req.id]: e.target.value,
-                                })
-                              }
-                              rows="2"
-                            />
-                            <button
-                              className="action-btn complete"
-                              onClick={() => handleSaveMeetupNote(req.id)}
-                            >
-                              Save Note
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                      <td className="action-cell">
-                        {req.status === "Pending" && (
-                          <>
-                            <button
-                              className="action-btn accept"
-                              onClick={() => handleAccept(req.id)}
-                            >
-                              Accept
-                            </button>
-                            <button
-                              className="action-btn reject"
-                              onClick={() => handleReject(req.id)}
-                            >
-                              Reject
-                            </button>
-                          </>
-                        )}
-                        {req.status === "Accepted" && (
-                          <button
-                            className="action-btn complete"
-                            onClick={() => handleComplete(req.id)}
-                          >
-                            Mark Completed
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          ) : (
-            <table className="swap-table">
-              <thead>
-                <tr>
-                  <th>Requested Book</th>
-                  <th>Offered Book</th>
-                  <th>Recipient</th>
-                  <th>Status</th>
-                  <th>Meetup Note</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sentRequests.length === 0 ? (
-                  <tr>
-                    <td colSpan="5">No sent requests.</td>
-                  </tr>
-                ) : (
-                  sentRequests.map((req) => (
-                    <tr key={req.id}>
-                      <td>{req.requested_book_title}</td>
-                      <td>{req.offered_book_title}</td>
-                      <td>{req.recipient_name}</td>
-                      <td>
-                        <span
-                          className={`status-badge ${req.status.toLowerCase()}`}
-                        >
-                          {req.status}
-                        </span>
-                      </td>
-                      <td>
-                        {req.meetup_note ? (
-                          <p className="existing-note">📝 {req.meetup_note}</p>
-                        ) : null}
-                        {req.status === "Accepted" && (
-                          <div className="meetup-note-cell">
-                            <textarea
-                              className="meetup-input"
-                              placeholder="Add meetup note..."
-                              value={meetupNotes[req.id] || ""}
-                              onChange={(e) =>
-                                setMeetupNotes({
-                                  ...meetupNotes,
-                                  [req.id]: e.target.value,
-                                })
-                              }
-                              rows="2"
-                            />
-                            <button
-                              className="action-btn complete"
-                              onClick={() => handleSaveMeetupNote(req.id)}
-                            >
-                              Save Note
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
+          {activeTab === "incoming"
+            ? renderTable(incomingRequests, true)
+            : renderTable(sentRequests, false)}
         </div>
       </main>
     </div>
