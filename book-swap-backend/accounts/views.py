@@ -17,6 +17,7 @@ def register_view(request):
     serializer = RegisterSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
+        # create a token for the new user
         token = Token.objects.create(user=user)
         return Response({
             'token': token.key,
@@ -36,6 +37,7 @@ def login_view(request):
     serializer = LoginSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.validated_data['user']
+        # get existing token or create a new one
         token, _ = Token.objects.get_or_create(user=user)
         return Response({
             'token': token.key,
@@ -52,6 +54,7 @@ def login_view(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def logout_view(request):
+    # delete the token to log the user out
     request.user.auth_token.delete()
     return Response({'message': 'Logged out successfully'}, status=status.HTTP_200_OK)
 
@@ -62,6 +65,7 @@ def profile_view(request):
     if request.method == 'GET':
         serializer = UserProfileSerializer(request.user)
         return Response(serializer.data)
+    # partial=True allows updating only some fields
     serializer = UserProfileSerializer(request.user, data=request.data, partial=True, context={'request': request})
     if serializer.is_valid():
         serializer.save()
@@ -89,6 +93,7 @@ def admin_remove_user(request, pk):
 @permission_classes([IsAuthenticated, IsAdminUser])
 def admin_block_user(request, pk):
     user = get_object_or_404(User, pk=pk)
+    # block the user and delete their token so they get logged out
     user.is_blocked = True
     user.save()
     Token.objects.filter(user=user).delete()
@@ -113,24 +118,24 @@ def admin_remove_book(request, pk):
     book.delete()
     return Response({'message': 'Book removed successfully'}, status=status.HTTP_200_OK)
 
+
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def upload_profile_image(request):
     user = request.user
     if 'profile_image' not in request.FILES:
         return Response({'detail': 'No image provided.'}, status=status.HTTP_400_BAD_REQUEST)
+    # save the uploaded image to the user profile
     user.profile_image = request.FILES['profile_image']
     user.save()
     serializer = UserProfileSerializer(user, context={'request': request})
     return Response(serializer.data)
 
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def user_locations(request):
-    """
-    Returns list of users with location coordinates for the map.
-    Only includes users who have successfully saved lat/lng.
-    """
+    # only return users who have dropped a map pin (have lat and lng saved)
     users = User.objects.filter(
         lat__isnull=False,
         lng__isnull=False
@@ -149,6 +154,7 @@ def user_locations(request):
 
     return Response(result)
 
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def map_user_profile(request, pk):
@@ -156,11 +162,16 @@ def map_user_profile(request, pk):
     from swaps.models import SwapRequest
 
     user = get_object_or_404(User, pk=pk)
+
+    # get all books this user has available for swap
     books = Book.objects.filter(owner=user, is_available_for_swap=True)
+
+    # get the last 20 swaps this user was involved in
     swap_history = SwapRequest.objects.filter(
         Q(requester=user) | Q(requested_book__owner=user) | Q(offered_book__owner=user)
     ).select_related('requester', 'requested_book', 'offered_book', 'requested_book__owner').order_by('-created_at')[:20]
 
+    # check if the current logged in user has an active swap with this user
     active_swap = SwapRequest.objects.filter(
         status='Accepted'
     ).filter(
@@ -173,6 +184,7 @@ def map_user_profile(request, pk):
         requested_book__owner=request.user
     ).first()
 
+    # build the profile image url if it exists
     profile_image = None
     if user.profile_image:
         profile_image = request.build_absolute_uri(user.profile_image.url)

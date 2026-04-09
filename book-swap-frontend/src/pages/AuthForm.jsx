@@ -40,6 +40,7 @@ export default function AuthForm() {
   const [lat, setLat] = useState(null);
   const [lng, setLng] = useState(null);
   const defaultMapCenter = useMemo(() => [28.3949, 84.124], []);
+
   const normalizeCoord = (value) =>
     value == null || Number.isNaN(Number(value))
       ? null
@@ -67,28 +68,26 @@ export default function AuthForm() {
         data.address?.hamlet ||
         data.address?.road ||
         "";
-
       const composed = [detectedArea, detectedCity].filter(Boolean).join(", ");
       if (composed) setLocation(composed);
     } catch {
-      // Keep raw coordinates even if reverse geocoding fails.
+      // keep raw coordinates even if reverse geocoding fails
     }
   };
 
   const detectLocation = () => {
     setLocationLoading(true);
-
     if (!navigator.geolocation) {
       setError("Geolocation is not supported by your browser.");
       setLocationLoading(false);
       return;
     }
-
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        const latitude = position.coords.latitude;
-        const longitude = position.coords.longitude;
-        await applyLocationFromCoordinates(latitude, longitude);
+        await applyLocationFromCoordinates(
+          position.coords.latitude,
+          position.coords.longitude,
+        );
         setLocationLoading(false);
       },
       () => {
@@ -102,18 +101,15 @@ export default function AuthForm() {
     e.preventDefault();
     setError("");
     setLoading(true);
-
     try {
       if (isLogin) {
-        // LOGIN
+        // normal email/password login
         const res = await fetch("http://localhost:8000/api/auth/login/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
         });
-
         const data = await res.json();
-
         if (res.ok) {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
@@ -122,7 +118,7 @@ export default function AuthForm() {
           setError(data.non_field_errors?.[0] || "Invalid email or password.");
         }
       } else {
-        // REGISTER
+        // register - require map pin
         if (lat == null || lng == null) {
           setError("Please select your exact location pin on the map.");
           setLoading(false);
@@ -140,9 +136,7 @@ export default function AuthForm() {
             lng: normalizeCoord(lng),
           }),
         });
-
         const data = await res.json();
-
         if (res.ok) {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));

@@ -81,8 +81,11 @@ export default function Profile() {
       if (response.ok) {
         const data = await response.json();
         setUser(data);
-        setEditing(false);
-        alert("Profile updated successfully!");
+        // update localStorage so navbar shows new photo too
+        localStorage.setItem("user", JSON.stringify(data));
+        setImageFile(null);
+        setImagePreview(null);
+        alert("Profile photo updated!");
       }
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -163,7 +166,11 @@ export default function Profile() {
                 <img src={imagePreview} alt="preview" className="avatar-img" />
               ) : user.profile_image ? (
                 <img
-                  src={`http://localhost:8000${user.profile_image}`}
+                  src={
+                    user.profile_image.startsWith("http")
+                      ? user.profile_image
+                      : `http://localhost:8000${user.profile_image}`
+                  }
                   alt="profile"
                   className="avatar-img"
                 />

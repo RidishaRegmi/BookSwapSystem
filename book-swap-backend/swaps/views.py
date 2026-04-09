@@ -165,8 +165,11 @@ def cancel_request(request, pk):
     swap = get_object_or_404(SwapRequest, pk=pk)
     if request.user != swap.requester and request.user != swap.requested_book.owner:
         return Response({'detail': 'Only participants can cancel this swap.'}, status=status.HTTP_403_FORBIDDEN)
-    if swap.status != 'Accepted':
-        return Response({'detail': 'Only accepted swaps can be cancelled.'}, status=status.HTTP_400_BAD_REQUEST)
+    # allow reading messages for completed swaps too
+    # but only allow sending messages for active (accepted) swaps
+    if swap.status not in ('Accepted', 'Completed'):
+         return Response({'detail': 'Chat is available only for active or completed swaps.'}, status=status.HTTP_400_BAD_REQUEST)
+
 
     swap.status = 'Cancelled'
     swap.requester_marked_completed = False

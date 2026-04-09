@@ -112,7 +112,11 @@ export default function HomePage() {
                       <div className="hero-book-img">
                         {book.image ? (
                           <img
-                            src={`http://localhost:8000${book.image}`}
+                            src={
+                              book.image.startsWith("http")
+                                ? book.image
+                                : `http://localhost:8000${book.image}`
+                            }
                             alt={book.title}
                           />
                         ) : (

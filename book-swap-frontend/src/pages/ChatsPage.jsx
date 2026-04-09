@@ -67,9 +67,16 @@ export default function ChatsPage() {
       ]);
       const incoming = await incomingRes.json();
       const sent = await sentRes.json();
-      const allSwaps = [...incoming, ...sent].filter(
+      const combined = [...incoming, ...sent].filter(
         (swap) => swap.status === "Accepted" || swap.status === "Completed",
       );
+      // deduplicate by swap id - same swap appears in both incoming and sent
+      const seen = new Set();
+      const allSwaps = combined.filter((swap) => {
+        if (seen.has(swap.id)) return false;
+        seen.add(swap.id);
+        return true;
+      });
       setAcceptedSwaps(allSwaps);
       if (!selectedChatSwap && allSwaps.length > 0)
         setSelectedChatSwap(allSwaps[0]);

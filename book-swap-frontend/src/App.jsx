@@ -13,6 +13,8 @@ import AdminDashboard from "./pages/AdminDashboard.jsx";
 import MapPage from "./pages/MapPage";
 import UserPublicProfile from "./pages/UserPublicProfile.jsx";
 import ChatsPage from "./pages/ChatsPage.jsx";
+import Recommendations from "./pages/Recommendations.jsx";
+import Wishlist from "./pages/Wishlist.jsx";
 
 function App() {
   return (
@@ -32,6 +34,8 @@ function App() {
         <Route path="/map" element={<MapPage />} />
         <Route path="/users/:id" element={<UserPublicProfile />} />
         <Route path="/chats" element={<ChatsPage />} />
+        <Route path="/recommendations" element={<Recommendations />} />
+        <Route path="/wishlist" element={<Wishlist />} />
       </Routes>
     </Router>
   );

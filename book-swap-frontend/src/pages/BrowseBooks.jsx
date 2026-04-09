@@ -22,10 +22,14 @@ export default function BrowseBooks() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [condition, setCondition] = useState("All");
-  const [location, setLocation] = useState("");
+  const [sortByDistance, setSortByDistance] = useState(false);
   const [loading, setLoading] = useState(true);
-
   const token = localStorage.getItem("token");
+
+  // get current user's lat/lng from localStorage
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const userLat = user.lat;
+  const userLng = user.lng;
 
   const handleLogout = async () => {
     try {
@@ -47,7 +51,7 @@ export default function BrowseBooks() {
       return;
     }
     fetchBooks();
-  }, [search, category, condition, location]);
+  }, [search, category, condition, sortByDistance]);
 
   const fetchBooks = async () => {
     setLoading(true);
@@ -56,7 +60,11 @@ export default function BrowseBooks() {
       if (search) url += `search=${search}&`;
       if (category !== "All") url += `category=${category}&`;
       if (condition !== "All") url += `condition=${condition}&`;
-      if (location) url += `location=${location}&`;
+
+      // send user coordinates to backend for distance calculation
+      if (sortByDistance && userLat && userLng) {
+        url += `sort_by_distance=true&user_lat=${userLat}&user_lng=${userLng}&`;
+      }
 
       const response = await fetch(url, {
         headers: { Authorization: `Token ${token}` },
@@ -112,20 +120,25 @@ export default function BrowseBooks() {
               ))}
             </select>
           </div>
+
+          {/* sort by distance toggle - replaces location filter */}
           <div className="filter-group">
-            <label>Location</label>
-            <input
-              type="text"
-              placeholder="Filter by city..."
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="location-filter"
-            />
+            <label>Sort by Distance</label>
+            <button
+              type="button"
+              onClick={() => setSortByDistance(!sortByDistance)}
+              className={`distance-toggle ${sortByDistance ? "active" : ""}`}
+            >
+              {sortByDistance ? "📍 Nearest First" : "📍 Sort by Distance"}
+            </button>
           </div>
         </div>
 
         <div className="books-section">
-          <p className="results-count">{books.length} book(s) found</p>
+          <p className="results-count">
+            {books.length} book(s) found
+            {sortByDistance && " — sorted by nearest first"}
+          </p>
           {loading ? (
             <p>Loading books...</p>
           ) : books.length > 0 ? (
@@ -135,7 +148,7 @@ export default function BrowseBooks() {
                   <div className="book-image-placeholder">
                     {book.image ? (
                       <img
-                        src={`http://localhost:8000${book.image}`}
+                        src={book.image}
                         alt={book.title}
                         style={{
                           width: "100%",
@@ -154,7 +167,18 @@ export default function BrowseBooks() {
                     <div className="book-tags">
                       <span className="tag">{book.category}</span>
                       <span className="tag">{book.condition}</span>
+                      {/* show distance badge if available */}
+                      {book.distance_km !== null &&
+                        book.distance_km !== undefined && (
+                          <span className="tag distance-tag">
+                            📍 {book.distance_km} km
+                          </span>
+                        )}
                     </div>
+                    {/* show owner city */}
+                    {book.owner?.city && (
+                      <p className="book-city">📌 {book.owner.city}</p>
+                    )}
                   </div>
                   <button
                     className="view-btn"
